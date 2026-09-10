@@ -34,6 +34,7 @@ function sortApplications(items) {
   const comparators = {
     applied: newestDateFirst('dateApplied'),
     company: (a, b) => a.company.localeCompare(b.company, undefined, { sensitivity: 'base' }) || newestAddedFirst(a, b),
+    companyReverse: (a, b) => b.company.localeCompare(a.company, undefined, { sensitivity: 'base' }) || newestAddedFirst(a, b),
     status: (a, b) => statusRank(a) - statusRank(b) || newestAddedFirst(a, b),
     statusReverse: (a, b) => statusRank(b) - statusRank(a) || newestAddedFirst(a, b),
     posted: newestDateFirst('datePosted'),
