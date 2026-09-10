@@ -36,8 +36,11 @@
 
     <section class="dashboard">
       <div class="section-heading">
-        <div><h2>Your applications</h2><p id="applicationCount">0 opportunities in your pipeline</p></div>
-        <label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="searchInput" placeholder="Search applications"></label>
+        <div><h2>Your applications</h2><p id="applicationCount">There are 0 applications in your pipeline</p></div>
+        <div class="table-tools">
+          <label class="sort-control"><span>Sort by</span><select id="sortSelect" aria-label="Sort applications"><option value="applied">Date applied</option><option value="company">Company A–Z</option><option value="status">Status: offer first</option><option value="statusReverse">Status: withdrawn first</option><option value="posted">Date posted</option></select></label>
+          <label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="searchInput" placeholder="Search applications"></label>
+        </div>
       </div>
 
       <div class="table-card">

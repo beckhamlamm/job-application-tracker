@@ -5,7 +5,11 @@ const dialog = $('#applicationDialog');
 let applications = load();
 
 function load() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    const migrationTime = Date.now();
+    return saved.map((item, index) => ({ ...item, createdAt: item.createdAt || migrationTime - index }));
+  } catch { return []; }
 }
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(applications)); render(); }
 function today() { return new Date().toISOString().slice(0, 10); }
@@ -14,9 +18,32 @@ function formatDate(value) { return value ? new Intl.DateTimeFormat(undefined, {
 function initial(value = '') { return value.trim().charAt(0).toUpperCase() || '?'; }
 function toast(message) { const el = $('#toast'); el.textContent = message; el.classList.add('visible'); clearTimeout(toast.timer); toast.timer = setTimeout(() => el.classList.remove('visible'), 2200); }
 
+const STATUS_ORDER = ['Offer', 'Interviewing', 'Applied', 'Rejected', 'Withdrawn'];
+function newestAddedFirst(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); }
+function newestDateFirst(field) {
+  return (a, b) => {
+    if (!a[field] && !b[field]) return newestAddedFirst(a, b);
+    if (!a[field]) return 1;
+    if (!b[field]) return -1;
+    return b[field].localeCompare(a[field]) || newestAddedFirst(a, b);
+  };
+}
+function sortApplications(items) {
+  const mode = $('#sortSelect').value;
+  const statusRank = (item) => STATUS_ORDER.indexOf(item.status);
+  const comparators = {
+    applied: newestDateFirst('dateApplied'),
+    company: (a, b) => a.company.localeCompare(b.company, undefined, { sensitivity: 'base' }) || newestAddedFirst(a, b),
+    status: (a, b) => statusRank(a) - statusRank(b) || newestAddedFirst(a, b),
+    statusReverse: (a, b) => statusRank(b) - statusRank(a) || newestAddedFirst(a, b),
+    posted: newestDateFirst('datePosted'),
+  };
+  return [...items].sort(comparators[mode] || comparators.applied);
+}
+
 function render() {
   const term = $('#searchInput').value.trim().toLowerCase();
-  const visible = applications.filter((item) => [item.company, item.role, item.status].some((value) => value?.toLowerCase().includes(term)));
+  const visible = sortApplications(applications.filter((item) => [item.company, item.role, item.status].some((value) => value?.toLowerCase().includes(term))));
   const count = applications.length;
   $('#applicationCount').textContent = `${count === 1 ? 'There is' : 'There are'} ${count} ${count === 1 ? 'application' : 'applications'} in your pipeline`;
   $('#emptyState').hidden = visible.length > 0;
@@ -62,8 +89,8 @@ $('#urlForm').addEventListener('submit', async (event) => {
 $('#applicationForm').addEventListener('submit', (event) => {
   event.preventDefault();
   const id = $('#editId').value || crypto.randomUUID();
-  const item = { id, url: $('#jobUrl').value.trim(), company: $('#company').value.trim(), role: $('#role').value.trim(), datePosted: $('#datePosted').value, dateApplied: $('#dateApplied').value, status: $('#status').value };
   const index = applications.findIndex((entry) => entry.id === id);
+  const item = { id, url: $('#jobUrl').value.trim(), company: $('#company').value.trim(), role: $('#role').value.trim(), datePosted: $('#datePosted').value, dateApplied: $('#dateApplied').value, status: $('#status').value, createdAt: index >= 0 ? applications[index].createdAt : Date.now() };
   if (index >= 0) applications[index] = item; else applications.unshift(item);
   save(); dialog.close(); $('#urlInput').value = ''; toast(index >= 0 ? 'Application updated' : 'Application added');
 });
@@ -79,6 +106,7 @@ $('#manualButton').addEventListener('click', () => openDialog());
 $('#closeDialog').addEventListener('click', () => dialog.close());
 $('#cancelDialog').addEventListener('click', () => dialog.close());
 $('#searchInput').addEventListener('input', render);
+$('#sortSelect').addEventListener('change', render);
 $('#exportButton').addEventListener('click', () => {
   if (!applications.length) return toast('Add an application before exporting');
   const fields = ['Company', 'Role', 'URL', 'Date Posted', 'Date Applied', 'Status'];
