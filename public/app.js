@@ -17,7 +17,8 @@ function toast(message) { const el = $('#toast'); el.textContent = message; el.c
 function render() {
   const term = $('#searchInput').value.trim().toLowerCase();
   const visible = applications.filter((item) => [item.company, item.role, item.status].some((value) => value?.toLowerCase().includes(term)));
-  $('#applicationCount').textContent = `${applications.length} ${applications.length === 1 ? 'opportunity' : 'opportunities'} in your pipeline`;
+  const count = applications.length;
+  $('#applicationCount').textContent = `${count === 1 ? 'There is' : 'There are'} ${count} ${count === 1 ? 'application' : 'applications'} in your pipeline`;
   $('#emptyState').hidden = visible.length > 0;
   rows.innerHTML = visible.map((item) => `
     <tr>
