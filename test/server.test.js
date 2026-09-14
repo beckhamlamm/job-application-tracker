@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { parseJobPage, isPrivateHost } = require('../server');
+const { parseJobPage } = require('../src/job-parser');
+const { isPrivateHost, validatePublicUrl } = require('../src/url-security');
 
 test('parses a schema.org JobPosting', () => {
   const html = `<script type="application/ld+json">{"@context":"https://schema.org","@type":"JobPosting","title":"Product Designer","datePosted":"2026-08-18","hiringOrganization":{"name":"Northstar Labs"}}</script>`;
@@ -15,4 +16,10 @@ test('falls back to page metadata', () => {
 
 test('blocks private network targets', () => {
   assert.equal(isPrivateHost('localhost'), true); assert.equal(isPrivateHost('192.168.1.2'), true); assert.equal(isPrivateHost('jobs.example.com'), false);
+});
+
+test('validates public job URLs', () => {
+  assert.equal(validatePublicUrl('https://jobs.example.com/123').hostname, 'jobs.example.com');
+  assert.throws(() => validatePublicUrl('http://localhost/job'), /cannot be fetched/);
+  assert.throws(() => validatePublicUrl('not a url'), /valid URL/);
 });

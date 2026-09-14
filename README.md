@@ -27,6 +27,16 @@ Then open [http://localhost:3000](http://localhost:3000).
 npm test
 ```
 
+## Project structure
+
+- `server.js` — HTTP routing and static file delivery
+- `src/job-parser.js` — job page metadata extraction
+- `src/url-security.js` — public URL validation
+- `public/app.mjs` — browser event and rendering orchestration
+- `public/js/application-store.mjs` — application persistence
+- `public/js/application-sorting.mjs` — sorting strategies
+- `public/js/formatting.mjs` — display and CSV formatting
+
 ## Notes
 
 Some job sites block automated page access or omit structured job metadata. Applyboard opens the edit form in those cases so you can enter any missing details manually.
