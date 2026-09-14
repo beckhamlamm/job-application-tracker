@@ -1,15 +1,11 @@
-// Extracts normalized company, role, and posting-date data from job-page HTML.
+// Extracts job metadata once for role/date parsing and downstream company resolution.
 function decodeHtml(value = '') {
-  return value
+  return (typeof value === 'string' ? value : '')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&amp;/gi, '&').replace(/&quot;/gi, '"')
     .replace(/&#39;|&apos;/gi, "'").replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
     .replace(/\s+/g, ' ').trim();
-}
-
-function first(value) {
-  return Array.isArray(value) ? value[0] : value;
 }
 
 function findJobPosting(value) {
@@ -44,26 +40,15 @@ function getStructuredJob(html) {
   return null;
 }
 
-function companyFromHost(url) {
-  const host = new URL(url).hostname.replace(/^www\./, '');
-  return host.split('.')[0].replace(/(^|[-_])(\w)/g, (_, separator, letter) => `${separator ? ' ' : ''}${letter.toUpperCase()}`);
-}
-
 function parseJobPage(html, url) {
   const job = getStructuredJob(html);
   const titleTag = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '';
-  const organization = first(job?.hiringOrganization);
   const role = decodeHtml(job?.title || getMetaContent(html, 'og:title') || titleTag)
     .replace(/\s+[|–—-]\s+(LinkedIn|Indeed|Glassdoor).*$/i, '');
-  const structuredCompany = decodeHtml(organization?.name);
-  let company = structuredCompany || decodeHtml(getMetaContent(html, 'og:site_name'));
-  if (!company && role.includes(' at ')) company = role.split(/ at /i).pop();
 
   return {
     url,
-    company: company || companyFromHost(url),
-    companySource: structuredCompany ? 'structured-data' : 'generic-metadata',
-    companyConfidence: structuredCompany ? 'high' : 'low',
+    structuredJob: job,
     role,
     datePosted: String(job?.datePosted || '').slice(0, 10),
   };

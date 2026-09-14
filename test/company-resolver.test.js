@@ -24,7 +24,7 @@ test('resolves a SmartRecruiters posting through its public API', async () => {
 
 test('uses ATS account names when an API has no company field', async () => {
   const company = await resolveCompany({ html: '', url: 'https://jobs.lever.co/northstar-labs/123' });
-  assert.deepEqual(company, { name: 'Northstar Labs', source: 'Lever site', confidence: 'medium' });
+  assert.deepEqual(company, { name: 'Northstar Labs', source: 'lever account (inferred)', confidence: 'low' });
 });
 
 test('does not mistake a known platform name for the employer', async () => {

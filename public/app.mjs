@@ -98,6 +98,7 @@ $('#urlForm').addEventListener('submit', async (event) => {
 
 $('#applicationForm').addEventListener('submit', (event) => {
   event.preventDefault();
+  try {
   const result = store.upsert({
     id: $('#editId').value || crypto.randomUUID(), url: $('#jobUrl').value.trim(),
     company: $('#company').value.trim(), role: $('#role').value.trim(),
@@ -108,6 +109,7 @@ $('#applicationForm').addEventListener('submit', (event) => {
   dialog.close();
   $('#urlInput').value = '';
   toast(`Application ${result}`);
+  } catch (error) { alert(error.message); }
 });
 
 rows.addEventListener('click', (event) => {
@@ -116,7 +118,8 @@ rows.addEventListener('click', (event) => {
   const item = store.find(id);
   if (event.target.classList.contains('edit')) openDialog(item);
   if (event.target.classList.contains('delete') && confirm(`Remove ${item.role} at ${item.company}?`)) {
-    store.remove(id);
+    try { store.remove(id); }
+    catch (error) { alert(error.message); return; }
     render();
     toast('Application removed');
   }

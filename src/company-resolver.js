@@ -1,5 +1,6 @@
 // Resolves employer names through ranked structured-data, ATS API, metadata, and domain strategies.
 const { decodeHtml, getMetaContent, getStructuredJob } = require('./job-parser');
+const { publicFetch } = require('./public-fetch');
 
 const PLATFORM_NAMES = new Set([
   'ashby', 'greenhouse', 'indeed', 'lever', 'linkedin', 'smartrecruiters', 'workable', 'workday',
@@ -10,7 +11,9 @@ function result(name, source, confidence) {
 }
 
 function cleanSlug(slug = '') {
-  return decodeURIComponent(slug)
+  let decoded = slug;
+  try { decoded = decodeURIComponent(slug); } catch { /* Keep malformed slugs readable. */ }
+  return decoded
     .replace(/[-_]+/g, ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
@@ -57,10 +60,10 @@ async function resolveFromAts(details, fetchImpl, signal) {
       const posting = await fetchJson(fetchImpl, `https://api.smartrecruiters.com/v1/companies/${encodeURIComponent(details.account)}/postings/${encodeURIComponent(details.jobId)}`, signal);
       if (posting.company?.name) return result(posting.company.name, 'SmartRecruiters API', 'high');
     }
-  } catch { /* Continue to deterministic ATS URL fallback. */ }
-
-  const labels = { lever: 'Lever site', ashby: 'Ashby job board', workable: 'Workable account' };
-  if (labels[details.provider]) return result(cleanSlug(details.account), labels[details.provider], 'medium');
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    // Optional API unavailable: continue to page evidence.
+  }
   return null;
 }
 
@@ -69,21 +72,29 @@ function genericMetadataCompany(html, url) {
   if (siteName && !isPlatformName(siteName)) return result(siteName, 'page metadata', 'medium');
 
   const target = new URL(url);
+  if (/(^|\.)(greenhouse\.io|lever\.co|ashbyhq\.com|smartrecruiters\.com|workable\.com|myworkdayjobs\.com|linkedin\.com|indeed\.com|glassdoor\.com)$/.test(target.hostname)) {
+    return result('', 'unresolved', 'low');
+  }
   const host = target.hostname.replace(/^www\.|^careers\.|^jobs\./g, '');
   const label = host.split('.')[0];
   if (label && !isPlatformName(label)) return result(cleanSlug(label), 'company domain', 'low');
   return result('', 'unresolved', 'low');
 }
 
-async function resolveCompany({ html, url, fetchImpl = fetch, signal }) {
-  const organization = getStructuredJob(html)?.hiringOrganization;
+async function resolveCompany({ html, url, job = getStructuredJob(html), fetchImpl = publicFetch, signal }) {
+  const organization = job?.hiringOrganization;
   const structuredName = decodeHtml((Array.isArray(organization) ? organization[0] : organization)?.name);
   if (structuredName && !isPlatformName(structuredName)) {
     return result(structuredName, 'JobPosting structured data', 'high');
   }
 
-  const atsResult = await resolveFromAts(atsDetails(url), fetchImpl, signal);
-  return atsResult || genericMetadataCompany(html, url);
+  const details = atsDetails(url);
+  const atsResult = await resolveFromAts(details, fetchImpl, signal);
+  if (atsResult) return atsResult;
+  const metadata = genericMetadataCompany(html, url);
+  if (metadata.name) return metadata;
+  if (details?.account) return result(cleanSlug(details.account), `${details.provider} account (inferred)`, 'low');
+  return metadata;
 }
 
 module.exports = { atsDetails, cleanSlug, genericMetadataCompany, isPlatformName, resolveCompany };

@@ -5,6 +5,7 @@ const path = require('node:path');
 const { parseJobPage } = require('./src/job-parser');
 const { resolveCompany } = require('./src/company-resolver');
 const { validatePublicUrl } = require('./src/url-security');
+const { publicFetch } = require('./src/public-fetch');
 
 const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -30,14 +31,15 @@ async function parseRequest(req, res) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12_000);
   try {
-    const response = await fetch(target, {
+    const response = await publicFetch(target, {
       redirect: 'follow', signal: controller.signal,
       headers: { 'user-agent': 'Mozilla/5.0 (compatible; Applyboard/1.0)', accept: 'text/html' },
     });
     if (!response.ok) throw new Error(`The job page returned ${response.status}. You can still add it manually.`);
     const html = (await response.text()).slice(0, 4_000_000);
     const parsedJob = parseJobPage(html, response.url);
-    const company = await resolveCompany({ html, url: response.url, signal: controller.signal });
+    const company = await resolveCompany({ html, url: response.url, job: parsedJob.structuredJob, signal: controller.signal });
+    delete parsedJob.structuredJob;
     sendJson(res, 200, {
       ...parsedJob,
       company: company.name,
@@ -59,9 +61,9 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   if (!['GET', 'HEAD'].includes(req.method)) return sendJson(res, 405, { error: 'Method not allowed' });
-  const requestPath = req.url === '/' ? '/index.html' : req.url.split('?')[0];
+  const requestPath = req.url.split('?')[0] === '/' ? '/index.html' : req.url.split('?')[0];
   const filePath = path.resolve(PUBLIC_DIR, `.${requestPath}`);
-  if (!filePath.startsWith(PUBLIC_DIR)) return sendJson(res, 404, { error: 'Not found' });
+  if (!filePath.startsWith(PUBLIC_DIR + path.sep)) return sendJson(res, 404, { error: 'Not found' });
   fs.readFile(filePath, (error, data) => {
     if (error) return sendJson(res, 404, { error: 'Not found' });
     res.writeHead(200, { 'content-type': MIME[path.extname(filePath)] || 'application/octet-stream' });

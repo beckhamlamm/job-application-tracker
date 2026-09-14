@@ -6,12 +6,14 @@ const { isPrivateHost, validatePublicUrl } = require('../src/url-security');
 
 test('parses a schema.org JobPosting', () => {
   const html = `<script type="application/ld+json">{"@context":"https://schema.org","@type":"JobPosting","title":"Product Designer","datePosted":"2026-08-18","hiringOrganization":{"name":"Northstar Labs"}}</script>`;
-  assert.deepEqual(parseJobPage(html, 'https://jobs.example.com/123'), { url: 'https://jobs.example.com/123', company: 'Northstar Labs', companySource: 'structured-data', companyConfidence: 'high', role: 'Product Designer', datePosted: '2026-08-18' });
+  const parsed = parseJobPage(html, 'https://jobs.example.com/123');
+  assert.equal(parsed.structuredJob.hiringOrganization.name, 'Northstar Labs');
+  assert.equal(parsed.role, 'Product Designer');
+  assert.equal(parsed.datePosted, '2026-08-18');
 });
 
 test('falls back to page metadata', () => {
   const html = '<meta property="og:site_name" content="Acme"><meta property="og:title" content="Engineer"><title>Ignored</title>';
-  assert.equal(parseJobPage(html, 'https://acme.example/job').company, 'Acme');
   assert.equal(parseJobPage(html, 'https://acme.example/job').role, 'Engineer');
 });
 

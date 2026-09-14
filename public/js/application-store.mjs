@@ -14,24 +14,26 @@ export function createApplicationStore(storage) {
     }
   }
 
-  function persist() {
-    storage.setItem(STORAGE_KEY, JSON.stringify(applications));
+  function persist(next) {
+    try { storage.setItem(STORAGE_KEY, JSON.stringify(next)); }
+    catch { throw new Error('Could not save applications. Browser storage may be full or unavailable. Please export a backup and try again.'); }
+    applications = next;
   }
 
   return {
-    all: () => [...applications],
-    find: (id) => applications.find((item) => item.id === id),
+    all: () => applications.map((item) => ({ ...item })),
+    find: (id) => { const item = applications.find((item) => item.id === id); return item ? { ...item } : undefined; },
     upsert(item) {
       const index = applications.findIndex((entry) => entry.id === item.id);
       const stored = { ...item, createdAt: index >= 0 ? applications[index].createdAt : Date.now() };
-      if (index >= 0) applications[index] = stored;
-      else applications.unshift(stored);
-      persist();
+      const next = [...applications];
+      if (index >= 0) next[index] = stored;
+      else next.unshift(stored);
+      persist(next);
       return index >= 0 ? 'updated' : 'added';
     },
     remove(id) {
-      applications = applications.filter((item) => item.id !== id);
-      persist();
+      persist(applications.filter((item) => item.id !== id));
     },
   };
 }
