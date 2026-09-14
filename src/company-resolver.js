@@ -84,7 +84,9 @@ function genericMetadataCompany(html, url) {
 async function resolveCompany({ html, url, job = getStructuredJob(html), fetchImpl = publicFetch, signal }) {
   const organization = job?.hiringOrganization;
   const structuredName = decodeHtml((Array.isArray(organization) ? organization[0] : organization)?.name);
-  if (structuredName && !isPlatformName(structuredName)) {
+  // hiringOrganization identifies the employer, even when that employer also runs an ATS.
+  // Only generic site/domain evidence should be filtered by platform name.
+  if (structuredName) {
     return result(structuredName, 'JobPosting structured data', 'high');
   }
 

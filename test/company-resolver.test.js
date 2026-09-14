@@ -36,3 +36,44 @@ test('does not mistake a known platform name for the employer', async () => {
 test('recognizes supported ATS URLs', () => {
   assert.deepEqual(atsDetails('https://jobs.ashbyhq.com/acme/123'), { provider: 'ashby', account: 'acme' });
 });
+
+test('accepts platform companies explicitly named as the hiring organization', async () => {
+  for (const [name, url] of [
+    ['Workday', 'https://workday.wd5.myworkdayjobs.com/Workday/job/123'],
+    ['LinkedIn', 'https://www.linkedin.com/jobs/view/123'],
+    ['Greenhouse', 'https://boards.greenhouse.io/greenhouse/jobs/123'],
+    ['Lever', 'https://jobs.lever.co/lever/123'],
+    ['Ashby', 'https://jobs.ashbyhq.com/Ashby/123'],
+  ]) {
+    for (const organization of [{ name }, [{ name }]]) {
+      const html = `<script type="application/ld+json">${JSON.stringify({ '@type': 'JobPosting', hiringOrganization: organization })}</script>`;
+      const company = await resolveCompany({ html, url, fetchImpl: () => assert.fail('explicit employer needs no lookup') });
+      assert.equal(company.name, name);
+      assert.equal(company.confidence, 'high');
+    }
+  }
+});
+
+test('accepts platform employers from official ATS responses', async () => {
+  for (const [url, payload, name] of [
+    ['https://boards.greenhouse.io/greenhouse/jobs/123', { name: 'Greenhouse' }, 'Greenhouse'],
+    ['https://jobs.smartrecruiters.com/LinkedIn/123-engineer', { company: { name: 'LinkedIn' } }, 'LinkedIn'],
+  ]) {
+    const company = await resolveCompany({ html: '', url, fetchImpl: async () => ({ ok: true, json: async () => payload }) });
+    assert.equal(company.name, name);
+    assert.equal(company.confidence, 'high');
+  }
+});
+
+test('platform branding does not override a different hiring organization', async () => {
+  const html = '<meta property="og:site_name" content="LinkedIn"><script type="application/ld+json">{"@type":"JobPosting","hiringOrganization":{"name":"Acme"}}</script>';
+  const company = await resolveCompany({ html, url: 'https://www.linkedin.com/jobs/view/123' });
+  assert.equal(company.name, 'Acme');
+});
+
+test('generic platform branding alone is insufficient employer evidence', async () => {
+  for (const [name, url] of [['Workday', 'https://workday.com/jobs/123'], ['LinkedIn', 'https://linkedin.com/jobs/view/123']]) {
+    const company = await resolveCompany({ html: `<meta property="og:site_name" content="${name}">`, url });
+    assert.equal(company.name, '');
+  }
+});
