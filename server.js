@@ -1,3 +1,4 @@
+// Application entry point: serves the browser app and exposes the job-page parsing API.
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');

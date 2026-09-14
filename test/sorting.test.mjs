@@ -1,3 +1,4 @@
+// Verifies every application sorting mode and its recently-added tie-breaking behavior.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { sortApplications } from '../public/js/application-sorting.mjs';

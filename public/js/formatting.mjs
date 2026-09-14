@@ -1,3 +1,4 @@
+// Provides shared display, escaping, date, and CSV formatting helpers for the browser UI.
 export function today() {
   return new Date().toISOString().slice(0, 10);
 }

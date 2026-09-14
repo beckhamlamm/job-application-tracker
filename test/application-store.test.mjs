@@ -1,3 +1,4 @@
+// Verifies application persistence, updates, creation timestamps, and removal behavior.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createApplicationStore } from '../public/js/application-store.mjs';

@@ -1,3 +1,4 @@
+// Verifies job-page parsing fallbacks and protection against unsafe URL targets.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { parseJobPage } = require('../src/job-parser');

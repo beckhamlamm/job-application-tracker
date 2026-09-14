@@ -1,3 +1,4 @@
+# Excludes generated dependencies, local configuration, logs, and operating-system metadata.
 .DS_Store
 node_modules/
 .env

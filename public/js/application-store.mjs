@@ -1,3 +1,4 @@
+// Owns application collection state and persists it through an injected storage provider.
 const STORAGE_KEY = 'applyboard.applications.v1';
 
 export function createApplicationStore(storage) {

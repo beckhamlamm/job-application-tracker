@@ -1,3 +1,4 @@
+// Validates user-supplied URLs and prevents requests to local or private network hosts.
 function isPrivateHost(hostname) {
   return hostname === 'localhost' || hostname === '::1' || hostname.endsWith('.local') ||
     /^(127\.|10\.|0\.|169\.254\.|192\.168\.)/.test(hostname) ||

@@ -1,4 +1,5 @@
 {
+  "_comment": "Defines Applyboard project metadata, supported Node version, and development scripts.",
   "name": "job-application-tracker",
   "version": "1.0.0",
   "private": true,

@@ -1,3 +1,4 @@
+// Coordinates the Applyboard UI, including forms, rendering, URL parsing, and CSV export.
 import { createApplicationStore } from './js/application-store.mjs';
 import { sortApplications } from './js/application-sorting.mjs';
 import { applicationsToCsv, companyInitial, escapeHtml, formatDate, today } from './js/formatting.mjs';

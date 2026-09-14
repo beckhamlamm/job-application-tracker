@@ -1,3 +1,4 @@
+// Defines non-mutating sort strategies for application dates, companies, and statuses.
 export const STATUS_ORDER = ['Offer', 'Interviewing', 'Applied', 'Rejected', 'Withdrawn'];
 
 function newestAddedFirst(a, b) {

@@ -1,3 +1,4 @@
+// Extracts normalized company, role, and posting-date data from job-page HTML.
 function decodeHtml(value = '') {
   return value
     .replace(/<[^>]+>/g, ' ')
