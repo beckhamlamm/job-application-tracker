@@ -6,7 +6,7 @@ const { isPrivateHost, validatePublicUrl } = require('../src/url-security');
 
 test('parses a schema.org JobPosting', () => {
   const html = `<script type="application/ld+json">{"@context":"https://schema.org","@type":"JobPosting","title":"Product Designer","datePosted":"2026-08-18","hiringOrganization":{"name":"Northstar Labs"}}</script>`;
-  assert.deepEqual(parseJobPage(html, 'https://jobs.example.com/123'), { url: 'https://jobs.example.com/123', company: 'Northstar Labs', role: 'Product Designer', datePosted: '2026-08-18' });
+  assert.deepEqual(parseJobPage(html, 'https://jobs.example.com/123'), { url: 'https://jobs.example.com/123', company: 'Northstar Labs', companySource: 'structured-data', companyConfidence: 'high', role: 'Product Designer', datePosted: '2026-08-18' });
 });
 
 test('falls back to page metadata', () => {

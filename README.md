@@ -31,6 +31,7 @@ npm test
 
 - `server.js` — HTTP routing and static file delivery
 - `src/job-parser.js` — job page metadata extraction
+- `src/company-resolver.js` — ranked structured-data, ATS API, metadata, and domain company resolution
 - `src/url-security.js` — public URL validation
 - `public/app.mjs` — browser event and rendering orchestration
 - `public/js/application-store.mjs` — application persistence

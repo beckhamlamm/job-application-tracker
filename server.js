@@ -3,6 +3,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const { parseJobPage } = require('./src/job-parser');
+const { resolveCompany } = require('./src/company-resolver');
 const { validatePublicUrl } = require('./src/url-security');
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -35,7 +36,14 @@ async function parseRequest(req, res) {
     });
     if (!response.ok) throw new Error(`The job page returned ${response.status}. You can still add it manually.`);
     const html = (await response.text()).slice(0, 4_000_000);
-    sendJson(res, 200, parseJobPage(html, response.url));
+    const parsedJob = parseJobPage(html, response.url);
+    const company = await resolveCompany({ html, url: response.url, signal: controller.signal });
+    sendJson(res, 200, {
+      ...parsedJob,
+      company: company.name,
+      companySource: company.source,
+      companyConfidence: company.confidence,
+    });
   } finally { clearTimeout(timeout); }
 }
 

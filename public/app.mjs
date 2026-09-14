@@ -49,12 +49,21 @@ function openDialog(item = {}) {
   $('#editId').value = item.id || '';
   $('#jobUrl').value = item.url || '';
   $('#company').value = item.company || '';
+  $('#companySourceValue').value = item.companySource || '';
+  $('#companyConfidence').value = item.companyConfidence || '';
+  showCompanySource(item.companySource, item.companyConfidence);
   $('#role').value = item.role || '';
   $('#datePosted').value = item.datePosted || '';
   $('#dateApplied').value = item.dateApplied || today();
   $('#status').value = item.status || 'Applied';
   dialog.showModal();
   setTimeout(() => (item.company ? $('#company') : $('#jobUrl')).focus(), 0);
+}
+
+function showCompanySource(source, confidence) {
+  const note = $('#companySource');
+  note.textContent = source ? `Found via ${source} · ${confidence || 'unknown'} confidence` : '';
+  note.className = `field-note ${confidence || ''}`;
 }
 
 async function parseJobUrl(url) {
@@ -93,6 +102,7 @@ $('#applicationForm').addEventListener('submit', (event) => {
     id: $('#editId').value || crypto.randomUUID(), url: $('#jobUrl').value.trim(),
     company: $('#company').value.trim(), role: $('#role').value.trim(),
     datePosted: $('#datePosted').value, dateApplied: $('#dateApplied').value, status: $('#status').value,
+    companySource: $('#companySourceValue').value, companyConfidence: $('#companyConfidence').value,
   });
   render();
   dialog.close();
@@ -113,6 +123,11 @@ rows.addEventListener('click', (event) => {
 });
 
 $('#manualButton').addEventListener('click', () => openDialog());
+$('#company').addEventListener('input', () => {
+  $('#companySourceValue').value = 'manual review';
+  $('#companyConfidence').value = 'high';
+  showCompanySource('manual review', 'high');
+});
 $('#closeDialog').addEventListener('click', () => dialog.close());
 $('#cancelDialog').addEventListener('click', () => dialog.close());
 $('#searchInput').addEventListener('input', render);

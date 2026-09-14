@@ -55,15 +55,18 @@ function parseJobPage(html, url) {
   const organization = first(job?.hiringOrganization);
   const role = decodeHtml(job?.title || getMetaContent(html, 'og:title') || titleTag)
     .replace(/\s+[|–—-]\s+(LinkedIn|Indeed|Glassdoor).*$/i, '');
-  let company = decodeHtml(organization?.name || getMetaContent(html, 'og:site_name'));
+  const structuredCompany = decodeHtml(organization?.name);
+  let company = structuredCompany || decodeHtml(getMetaContent(html, 'og:site_name'));
   if (!company && role.includes(' at ')) company = role.split(/ at /i).pop();
 
   return {
     url,
     company: company || companyFromHost(url),
+    companySource: structuredCompany ? 'structured-data' : 'generic-metadata',
+    companyConfidence: structuredCompany ? 'high' : 'low',
     role,
     datePosted: String(job?.datePosted || '').slice(0, 10),
   };
 }
 
-module.exports = { decodeHtml, findJobPosting, getMetaContent, parseJobPage };
+module.exports = { decodeHtml, findJobPosting, getMetaContent, getStructuredJob, parseJobPage };
