@@ -31,7 +31,9 @@ npm test
 ## Project structure
 
 - `server.js` — HTTP routing and static file delivery
+- `src/job-service.js` — parsing workflow with injectable fetch, page-parser, and resolver dependencies
 - `src/job-parser.js` — job page metadata extraction
+- `src/structured-data.js` — structured job selection, organization references, and microdata reading
 - `src/custom-job-board.js` — discovers embedded Greenhouse links and verifies domain-derived board candidates against the original job URL; no company-specific mappings
 - `src/public-fetch.js` — validates DNS addresses, redirects, and response sizes
 - `src/company-resolver.js` — ranked structured-data, ATS API, metadata, and domain company resolution
@@ -47,7 +49,7 @@ Some job sites block automated page access or omit structured job metadata. Appl
 
 The general parser supports JSON-LD (including organization references), embedded JSON job records, microdata/RDFa, job headings, and company website metadata. It uses public-suffix-aware domain parsing for low-confidence company fallbacks. Inferred Greenhouse board names are accepted only if the job ID and returned job URL match. Posting dates are not inferred from edit timestamps.
 
-JavaScript is not executed: jobs available only after client-side rendering, sign-in, or browser verification may require manual entry. This is not a universal extraction guarantee. Tests use varied HTML fixtures plus live spot checks; they do not establish an accuracy percentage across the web.
+JavaScript is not executed: jobs available only after client-side rendering, sign-in, or browser verification may require manual entry. This is not a universal extraction guarantee. Automated tests use synthetic HTML and mocked dependencies, independent of live job availability; they do not establish an accuracy percentage across the web.
 
 ## Roadmap
 

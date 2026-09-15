@@ -2,15 +2,12 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const { parseJobPage } = require('./src/job-parser');
-const { resolveCompany } = require('./src/company-resolver');
-const { validatePublicUrl } = require('./src/url-security');
-const { publicFetch } = require('./src/public-fetch');
-const { resolveCustomJobBoard } = require('./src/custom-job-board');
+const { createJobService } = require('./src/job-service');
 
 const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const MAX_BODY = 1_000_000;
+const parseJob = createJobService();
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -27,31 +24,7 @@ async function parseRequest(req, res) {
     if (body.length > MAX_BODY) throw new Error('Request is too large.');
   }
   const input = JSON.parse(body || '{}').url;
-  const target = validatePublicUrl(input);
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12_000);
-  try {
-    const response = await publicFetch(target, {
-      redirect: 'follow', signal: controller.signal,
-      headers: { 'user-agent': 'Mozilla/5.0 (compatible; Applyboard/1.0)', accept: 'text/html' },
-    });
-    const html = (await response.text()).slice(0, 4_000_000);
-    const blocked = !response.ok || /<title[^>]*>\s*(?:Vercel Security Checkpoint|Access Denied)/i.test(html);
-    const customJob = await resolveCustomJobBoard(target, { html: blocked ? '' : html, signal: controller.signal });
-    if (customJob) return sendJson(res, 200, customJob);
-    if (blocked) throw new Error('This website requires browser verification or is unavailable. Open it in your browser and enter the job details manually.');
-    const parsedJob = parseJobPage(html, response.url);
-    const company = await resolveCompany({ html, url: response.url, job: parsedJob.structuredJob, pageCompany: parsedJob.pageCompany, signal: controller.signal });
-    delete parsedJob.structuredJob;
-    delete parsedJob.pageCompany;
-    sendJson(res, 200, {
-      ...parsedJob,
-      company: company.name,
-      companySource: company.source,
-      companyConfidence: company.confidence,
-    });
-  } finally { clearTimeout(timeout); }
+  sendJson(res, 200, await parseJob(input));
 }
 
 function sendJson(res, status, value) {
