@@ -1,7 +1,13 @@
 // Coordinates the Applyboard UI, including forms, rendering, URL parsing, and CSV export.
 import { createApplicationStore } from './js/application-store.mjs';
 import { sortApplications } from './js/application-sorting.mjs';
-import { applicationsToCsv, companyInitial, escapeHtml, formatDate, today } from './js/formatting.mjs';
+import {
+  applicationsToCsv,
+  companyInitial,
+  escapeHtml,
+  formatDate,
+  today,
+} from './js/formatting.mjs';
 
 const $ = (selector) => document.querySelector(selector);
 const rows = $('#applicationRows');
@@ -17,8 +23,9 @@ function toast(message) {
 }
 
 function matchesSearch(item, term) {
-  return [item.company, item.role, item.status]
-    .some((value) => value?.toLowerCase().includes(term));
+  return [item.company, item.role, item.status].some((value) =>
+    value?.toLowerCase().includes(term),
+  );
 }
 
 function applicationRow(item) {
@@ -37,9 +44,13 @@ function applicationRow(item) {
 function render() {
   const applications = store.all();
   const term = $('#searchInput').value.trim().toLowerCase();
-  const visible = sortApplications(applications.filter((item) => matchesSearch(item, term)), $('#sortSelect').value);
+  const visible = sortApplications(
+    applications.filter((item) => matchesSearch(item, term)),
+    $('#sortSelect').value,
+  );
   const count = applications.length;
-  $('#applicationCount').textContent = `${count === 1 ? 'There is' : 'There are'} ${count} ${count === 1 ? 'application' : 'applications'} in your pipeline`;
+  $('#applicationCount').textContent =
+    `${count === 1 ? 'There is' : 'There are'} ${count} ${count === 1 ? 'application' : 'applications'} in your pipeline`;
   $('#emptyState').hidden = visible.length > 0;
   rows.innerHTML = visible.map(applicationRow).join('');
 }
@@ -61,10 +72,14 @@ function openDialog(item = {}) {
 
 async function parseJobUrl(url) {
   const response = await fetch('/api/parse', {
-    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url }),
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ url }),
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error);
+  if (!response.ok) {
+    throw new Error(data.error);
+  }
   return data;
 }
 
@@ -77,7 +92,7 @@ $('#urlForm').addEventListener('submit', async (event) => {
   button.textContent = 'Reading job page…';
   message.classList.remove('error');
   try {
-    openDialog({ ...await parseJobUrl(url), dateApplied: today(), status: 'Applied' });
+    openDialog({ ...(await parseJobUrl(url)), dateApplied: today(), status: 'Applied' });
     message.textContent = 'Details found. Review them before saving.';
   } catch (error) {
     openDialog({ url, dateApplied: today(), status: 'Applied' });
@@ -92,27 +107,45 @@ $('#urlForm').addEventListener('submit', async (event) => {
 $('#applicationForm').addEventListener('submit', (event) => {
   event.preventDefault();
   try {
-  const result = store.upsert({
-    id: $('#editId').value || crypto.randomUUID(), url: $('#jobUrl').value.trim(),
-    company: $('#company').value.trim(), role: $('#role').value.trim(),
-    datePosted: $('#datePosted').value, dateApplied: $('#dateApplied').value, status: $('#status').value,
-    companySource: $('#companySourceValue').value, companyConfidence: $('#companyConfidence').value,
-  });
-  render();
-  dialog.close();
-  $('#urlInput').value = '';
-  toast(`Application ${result}`);
-  } catch (error) { alert(error.message); }
+    const result = store.upsert({
+      id: $('#editId').value || crypto.randomUUID(),
+      url: $('#jobUrl').value.trim(),
+      company: $('#company').value.trim(),
+      role: $('#role').value.trim(),
+      datePosted: $('#datePosted').value,
+      dateApplied: $('#dateApplied').value,
+      status: $('#status').value,
+      companySource: $('#companySourceValue').value,
+      companyConfidence: $('#companyConfidence').value,
+    });
+    render();
+    dialog.close();
+    $('#urlInput').value = '';
+    toast(`Application ${result}`);
+  } catch (error) {
+    alert(error.message);
+  }
 });
 
 rows.addEventListener('click', (event) => {
   const id = event.target.dataset.id;
-  if (!id) return;
+  if (!id) {
+    return;
+  }
   const item = store.find(id);
-  if (event.target.classList.contains('edit')) openDialog(item);
-  if (event.target.classList.contains('delete') && confirm(`Remove ${item.role} at ${item.company}?`)) {
-    try { store.remove(id); }
-    catch (error) { alert(error.message); return; }
+  if (event.target.classList.contains('edit')) {
+    openDialog(item);
+  }
+  if (
+    event.target.classList.contains('delete') &&
+    confirm(`Remove ${item.role} at ${item.company}?`)
+  ) {
+    try {
+      store.remove(id);
+    } catch (error) {
+      alert(error.message);
+      return;
+    }
     render();
     toast('Application removed');
   }
@@ -129,9 +162,13 @@ $('#searchInput').addEventListener('input', render);
 $('#sortSelect').addEventListener('change', render);
 $('#exportButton').addEventListener('click', () => {
   const applications = store.all();
-  if (!applications.length) return toast('Add an application before exporting');
+  if (!applications.length) {
+    return toast('Add an application before exporting');
+  }
   const link = document.createElement('a');
-  link.href = URL.createObjectURL(new Blob([applicationsToCsv(applications)], { type: 'text/csv' }));
+  link.href = URL.createObjectURL(
+    new Blob([applicationsToCsv(applications)], { type: 'text/csv' }),
+  );
   link.download = `applications-${today()}.csv`;
   link.click();
   URL.revokeObjectURL(link.href);

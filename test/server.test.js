@@ -13,12 +13,15 @@ test('parses a schema.org JobPosting', () => {
 });
 
 test('falls back to page metadata', () => {
-  const html = '<meta property="og:site_name" content="Acme"><meta property="og:title" content="Engineer"><title>Ignored</title>';
+  const html =
+    '<meta property="og:site_name" content="Acme"><meta property="og:title" content="Engineer"><title>Ignored</title>';
   assert.equal(parseJobPage(html, 'https://acme.example/job').role, 'Engineer');
 });
 
 test('blocks private network targets', () => {
-  assert.equal(isPrivateHost('localhost'), true); assert.equal(isPrivateHost('192.168.1.2'), true); assert.equal(isPrivateHost('jobs.example.com'), false);
+  assert.equal(isPrivateHost('localhost'), true);
+  assert.equal(isPrivateHost('192.168.1.2'), true);
+  assert.equal(isPrivateHost('jobs.example.com'), false);
 });
 
 test('validates public job URLs', () => {

@@ -7,7 +7,9 @@ function memoryStorage(initial = null) {
   let value = initial;
   return {
     getItem: () => value,
-    setItem: (_key, next) => { value = next; },
+    setItem: (_key, next) => {
+      value = next;
+    },
     value: () => value,
   };
 }

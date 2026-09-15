@@ -4,13 +4,13 @@ Target: Applyboard application code (648 JavaScript lines before refactoring, ex
 
 ## SOLID scorecard
 
-| Principle | Assessment | Findings |
-| --- | --- | --- |
-| Single Responsibility | Improved | HTTP parsing endpoint mixed transport, fetching, timeouts, and extraction. Structured-record reading was mixed with page-field selection. Both boundaries are now separated. |
-| Open/Closed | Improved, remaining opportunity | Workflow dependencies can be replaced without editing orchestration. Provider recognition still uses conditionals; consider a provider registry when more integrations are added. |
-| Liskov Substitution | No inheritance issue found | No subclass overrides or unsupported inherited methods. Injected async dependencies retain compatible response contracts. |
-| Interface Segregation | No large interface found | Small function-based dependencies; no fat service interfaces requiring unused implementations. |
-| Dependency Inversion | Improved | Parsing workflow accepts fetch, parser, and resolver functions, with production defaults wired at construction. |
+| Principle             | Assessment                      | Findings                                                                                                                                                                          |
+| --------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Single Responsibility | Improved                        | HTTP parsing endpoint mixed transport, fetching, timeouts, and extraction. Structured-record reading was mixed with page-field selection. Both boundaries are now separated.      |
+| Open/Closed           | Improved, remaining opportunity | Workflow dependencies can be replaced without editing orchestration. Provider recognition still uses conditionals; consider a provider registry when more integrations are added. |
+| Liskov Substitution   | No inheritance issue found      | No subclass overrides or unsupported inherited methods. Injected async dependencies retain compatible response contracts.                                                         |
+| Interface Segregation | No large interface found        | Small function-based dependencies; no fat service interfaces requiring unused implementations.                                                                                    |
+| Dependency Inversion  | Improved                        | Parsing workflow accepts fetch, parser, and resolver functions, with production defaults wired at construction.                                                                   |
 
 ## Priority refactorings applied
 
@@ -32,13 +32,13 @@ Impact: Structured extraction used by page and company parsing. Risk: Low to med
 
 ## Code smells and quick wins
 
-| Smell | Location | Treatment |
-| --- | --- | --- |
-| Coupled workflow and HTTP response mutation | Former `server.js` parsing handler | Extracted service; destructuring excludes internal fields without mutating parser output. |
-| Dense nested record-selection logic | Former `src/job-parser.js` | Extracted named helpers in `src/structured-data.js`. |
-| Magic timeout/depth/HTML limits | Parsing workflow and structured reader | Named constants; timeout injectable for deterministic test setup. |
-| Repeated HTML parsing | Page parsing and metadata helpers | Deferred; sharing a document context warrants separate performance measurement and tests. |
-| UI rendering, forms, and networking together | `public/app.mjs` | Deferred; 141-line coordinator already delegates storage, sorting, and formatting. Browser interaction tests should precede further extraction. |
+| Smell                                        | Location                               | Treatment                                                                                                                                       |
+| -------------------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Coupled workflow and HTTP response mutation  | Former `server.js` parsing handler     | Extracted service; destructuring excludes internal fields without mutating parser output.                                                       |
+| Dense nested record-selection logic          | Former `src/job-parser.js`             | Extracted named helpers in `src/structured-data.js`.                                                                                            |
+| Magic timeout/depth/HTML limits              | Parsing workflow and structured reader | Named constants; timeout injectable for deterministic test setup.                                                                               |
+| Repeated HTML parsing                        | Page parsing and metadata helpers      | Deferred; sharing a document context warrants separate performance measurement and tests.                                                       |
+| UI rendering, forms, and networking together | `public/app.mjs`                       | Deferred; 141-line coordinator already delegates storage, sorting, and formatting. Browser interaction tests should precede further extraction. |
 
 ## Safety and technical debt
 

@@ -10,9 +10,14 @@ export function escapeHtml(value = '') {
 }
 
 export function formatDate(value) {
-  if (!value) return '—';
+  if (!value) {
+    return '—';
+  }
   return new Intl.DateTimeFormat(undefined, {
-    month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
@@ -23,6 +28,13 @@ export function companyInitial(value = '') {
 export function applicationsToCsv(applications) {
   const fields = ['Company', 'Role', 'URL', 'Date Posted', 'Date Applied', 'Status'];
   const quote = (value) => `"${String(value || '').replaceAll('"', '""')}"`;
-  const records = applications.map((item) => [item.company, item.role, item.url, item.datePosted, item.dateApplied, item.status]);
+  const records = applications.map((item) => [
+    item.company,
+    item.role,
+    item.url,
+    item.datePosted,
+    item.dateApplied,
+    item.status,
+  ]);
   return [fields, ...records].map((line) => line.map(quote).join(',')).join('\n');
 }

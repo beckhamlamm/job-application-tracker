@@ -21,7 +21,9 @@ async function parseRequest(req, res) {
   let body = '';
   for await (const chunk of req) {
     body += chunk;
-    if (body.length > MAX_BODY) throw new Error('Request is too large.');
+    if (body.length > MAX_BODY) {
+      throw new Error('Request is too large.');
+    }
   }
   const input = JSON.parse(body || '{}').url;
   sendJson(res, 200, await parseJob(input));
@@ -34,21 +36,36 @@ function sendJson(res, status, value) {
 
 const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && req.url === '/api/parse') {
-    try { await parseRequest(req, res); }
-    catch (error) { sendJson(res, 400, { error: error.name === 'AbortError' ? 'The page took too long to respond.' : error.message }); }
+    try {
+      await parseRequest(req, res);
+    } catch (error) {
+      sendJson(res, 400, {
+        error: error.name === 'AbortError' ? 'The page took too long to respond.' : error.message,
+      });
+    }
     return;
   }
-  if (!['GET', 'HEAD'].includes(req.method)) return sendJson(res, 405, { error: 'Method not allowed' });
+  if (!['GET', 'HEAD'].includes(req.method)) {
+    return sendJson(res, 405, { error: 'Method not allowed' });
+  }
   const requestPath = req.url.split('?')[0] === '/' ? '/index.html' : req.url.split('?')[0];
   const filePath = path.resolve(PUBLIC_DIR, `.${requestPath}`);
-  if (!filePath.startsWith(PUBLIC_DIR + path.sep)) return sendJson(res, 404, { error: 'Not found' });
+  if (!filePath.startsWith(PUBLIC_DIR + path.sep)) {
+    return sendJson(res, 404, { error: 'Not found' });
+  }
   fs.readFile(filePath, (error, data) => {
-    if (error) return sendJson(res, 404, { error: 'Not found' });
-    res.writeHead(200, { 'content-type': MIME[path.extname(filePath)] || 'application/octet-stream' });
+    if (error) {
+      return sendJson(res, 404, { error: 'Not found' });
+    }
+    res.writeHead(200, {
+      'content-type': MIME[path.extname(filePath)] || 'application/octet-stream',
+    });
     res.end(req.method === 'HEAD' ? undefined : data);
   });
 });
 
-if (require.main === module) server.listen(PORT, () => console.log(`Applyboard is running at http://localhost:${PORT}`));
+if (require.main === module) {
+  server.listen(PORT, () => console.log(`Applyboard is running at http://localhost:${PORT}`));
+}
 
 module.exports = { server };

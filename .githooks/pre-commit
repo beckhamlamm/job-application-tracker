@@ -1,0 +1,4 @@
+#!/bin/sh
+# Checks the working tree without modifying or staging files during a commit.
+set -eu
+npm run validate

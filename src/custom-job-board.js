@@ -8,28 +8,47 @@ function discoverBoards(url, html = '') {
   const candidates = [];
   const $ = load(html);
   const add = (board, id, inferred = false) => {
-    if (/^[\w-]+$/.test(board || '') && /^\d+$/.test(id || '')) candidates.push({ board, id, inferred });
+    if (/^[\w-]+$/.test(board || '') && /^\d+$/.test(id || '')) {
+      candidates.push({ board, id, inferred });
+    }
   };
   $('a[href], iframe[src], script[src]').each((_, el) => {
     try {
       const link = new URL($(el).attr('href') || $(el).attr('src'), url);
       const path = link.pathname.split('/').filter(Boolean);
       if (/^(?:boards|job-boards)\.greenhouse\.io$/.test(link.hostname)) {
-        if (path[0] === 'embed') add(link.searchParams.get('for'), link.searchParams.get('token') || target.searchParams.get('gh_jid'));
-        else add(path[0], path[1] === 'jobs' ? path[2] : target.searchParams.get('gh_jid'));
+        if (path[0] === 'embed') {
+          add(
+            link.searchParams.get('for'),
+            link.searchParams.get('token') || target.searchParams.get('gh_jid'),
+          );
+        } else {
+          add(path[0], path[1] === 'jobs' ? path[2] : target.searchParams.get('gh_jid'));
+        }
       }
-    } catch {}
+    } catch {
+      /* Ignore malformed optional integration URLs and inspect remaining links. */
+    }
   });
   const id = target.searchParams.get('gh_jid');
   if (id) {
     const pathId = target.pathname.match(/\/jobs\/(\d+)\/?$/)?.[1];
-    if (pathId && pathId !== id) throw new Error('The job IDs in this URL do not match.');
+    if (pathId && pathId !== id) {
+      throw new Error('The job IDs in this URL do not match.');
+    }
     const domain = getDomain(target.hostname);
-    if (domain) add(domain.split('.')[0], id, true);
+    if (domain) {
+      add(domain.split('.')[0], id, true);
+    }
   }
-  const unique = candidates.filter((item, index) => candidates.findIndex((other) => other.board === item.board && other.id === item.id) === index);
+  const unique = candidates.filter(
+    (item, index) =>
+      candidates.findIndex((other) => other.board === item.board && other.id === item.id) === index,
+  );
   // A page with several job links is a listing, not evidence for choosing the first job.
-  if (!id && new Set(unique.map((item) => `${item.board}/${item.id}`)).size > 1) return [];
+  if (!id && new Set(unique.map((item) => `${item.board}/${item.id}`)).size > 1) {
+    return [];
+  }
   return unique.filter((item) => !id || item.id === id).slice(0, 3);
 }
 async function resolveCustomJobBoard(url, { html = '', fetchImpl = publicFetch, signal } = {}) {
@@ -38,20 +57,43 @@ async function resolveCustomJobBoard(url, { html = '', fetchImpl = publicFetch, 
     try {
       const base = `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(candidate.board)}`;
       const postingResponse = await fetchImpl(`${base}/jobs/${candidate.id}`, { signal });
-      if (!postingResponse.ok) continue;
+      if (!postingResponse.ok) {
+        continue;
+      }
       const posting = await postingResponse.json();
-      if (String(posting.id) !== candidate.id || !posting.title) continue;
+      if (String(posting.id) !== candidate.id || !posting.title) {
+        continue;
+      }
       if (candidate.inferred) {
         const canonical = new URL(posting.absolute_url);
-        if (canonical.hostname !== target.hostname || canonical.pathname.replace(/\/$/, '') !== target.pathname.replace(/\/$/, '')) continue;
+        if (
+          canonical.hostname !== target.hostname ||
+          canonical.pathname.replace(/\/$/, '') !== target.pathname.replace(/\/$/, '')
+        ) {
+          continue;
+        }
       }
       const boardResponse = await fetchImpl(base, { signal });
-      if (!boardResponse.ok) continue;
+      if (!boardResponse.ok) {
+        continue;
+      }
       const organization = await boardResponse.json();
-      if (!organization.name) continue;
-      return { url: target.href, company: decodeHtml(organization.name), role: decodeHtml(posting.title),
-        datePosted: '', companySource: 'Greenhouse board API', companyConfidence: 'high' };
-    } catch (error) { if (signal?.aborted) throw error; }
+      if (!organization.name) {
+        continue;
+      }
+      return {
+        url: target.href,
+        company: decodeHtml(organization.name),
+        role: decodeHtml(posting.title),
+        datePosted: '',
+        companySource: 'Greenhouse board API',
+        companyConfidence: 'high',
+      };
+    } catch (error) {
+      if (signal?.aborted) {
+        throw error;
+      }
+    }
   }
   return null;
 }

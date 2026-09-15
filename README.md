@@ -28,6 +28,9 @@ Then open [http://localhost:3000](http://localhost:3000).
 npm test
 ```
 
+For development checks, use Node 24 (see `.nvmrc`), then run `npm run validate`.
+Use `npm run format` to format JavaScript, JSON, and Markdown. Optional pre-commit setup and review conventions are documented in [CODING_STANDARDS.md](CODING_STANDARDS.md).
+
 ## Project structure
 
 - `server.js` — HTTP routing and static file delivery

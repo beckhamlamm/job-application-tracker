@@ -4,7 +4,14 @@ const { publicFetch } = require('./public-fetch');
 const { getDomain } = require('tldts');
 
 const PLATFORM_NAMES = new Set([
-  'ashby', 'greenhouse', 'indeed', 'lever', 'linkedin', 'smartrecruiters', 'workable', 'workday',
+  'ashby',
+  'greenhouse',
+  'indeed',
+  'lever',
+  'linkedin',
+  'smartrecruiters',
+  'workable',
+  'workday',
 ]);
 
 function result(name, source, confidence) {
@@ -13,10 +20,12 @@ function result(name, source, confidence) {
 
 function cleanSlug(slug = '') {
   let decoded = slug;
-  try { decoded = decodeURIComponent(slug); } catch { /* Keep malformed slugs readable. */ }
-  return decoded
-    .replace(/[-_]+/g, ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  try {
+    decoded = decodeURIComponent(slug);
+  } catch {
+    /* Keep malformed slugs readable. */
+  }
+  return decoded.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function isPlatformName(name = '') {
@@ -36,7 +45,11 @@ function atsDetails(url) {
     return { provider: 'ashby', account: segments[0] };
   }
   if (/^(?:careers|jobs)\.smartrecruiters\.com$/i.test(target.hostname)) {
-    return { provider: 'smartrecruiters', account: segments[0], jobId: segments[1]?.match(/^\d+/)?.[0] || segments[1] };
+    return {
+      provider: 'smartrecruiters',
+      account: segments[0],
+      jobId: segments[1]?.match(/^\d+/)?.[0] || segments[1],
+    };
   }
   if (/^apply\.workable\.com$/i.test(target.hostname)) {
     return { provider: 'workable', account: segments[0] };
@@ -46,23 +59,41 @@ function atsDetails(url) {
 
 async function fetchJson(fetchImpl, url, signal) {
   const response = await fetchImpl(url, { signal, headers: { accept: 'application/json' } });
-  if (!response.ok) throw new Error(`Company lookup returned ${response.status}`);
+  if (!response.ok) {
+    throw new Error(`Company lookup returned ${response.status}`);
+  }
   return response.json();
 }
 
 async function resolveFromAts(details, fetchImpl, signal) {
-  if (!details?.account) return null;
+  if (!details?.account) {
+    return null;
+  }
   try {
     if (details.provider === 'greenhouse') {
-      const board = await fetchJson(fetchImpl, `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(details.account)}`, signal);
-      if (board.name) return result(board.name, 'Greenhouse board API', 'high');
+      const board = await fetchJson(
+        fetchImpl,
+        `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(details.account)}`,
+        signal,
+      );
+      if (board.name) {
+        return result(board.name, 'Greenhouse board API', 'high');
+      }
     }
     if (details.provider === 'smartrecruiters' && details.jobId) {
-      const posting = await fetchJson(fetchImpl, `https://api.smartrecruiters.com/v1/companies/${encodeURIComponent(details.account)}/postings/${encodeURIComponent(details.jobId)}`, signal);
-      if (posting.company?.name) return result(posting.company.name, 'SmartRecruiters API', 'high');
+      const posting = await fetchJson(
+        fetchImpl,
+        `https://api.smartrecruiters.com/v1/companies/${encodeURIComponent(details.account)}/postings/${encodeURIComponent(details.jobId)}`,
+        signal,
+      );
+      if (posting.company?.name) {
+        return result(posting.company.name, 'SmartRecruiters API', 'high');
+      }
     }
   } catch (error) {
-    if (signal?.aborted) throw error;
+    if (signal?.aborted) {
+      throw error;
+    }
     // Optional API unavailable: continue to page evidence.
   }
   return null;
@@ -70,34 +101,56 @@ async function resolveFromAts(details, fetchImpl, signal) {
 
 function genericMetadataCompany(html, url) {
   const siteName = decodeHtml(getMetaContent(html, 'og:site_name'));
-  if (siteName && !isPlatformName(siteName)) return result(siteName, 'page metadata', 'medium');
+  if (siteName && !isPlatformName(siteName)) {
+    return result(siteName, 'page metadata', 'medium');
+  }
 
   const target = new URL(url);
-  if (/(^|\.)(greenhouse\.io|lever\.co|ashbyhq\.com|smartrecruiters\.com|workable\.com|myworkdayjobs\.com|linkedin\.com|indeed\.com|glassdoor\.com)$/.test(target.hostname)) {
+  if (
+    /(^|\.)(greenhouse\.io|lever\.co|ashbyhq\.com|smartrecruiters\.com|workable\.com|myworkdayjobs\.com|linkedin\.com|indeed\.com|glassdoor\.com)$/.test(
+      target.hostname,
+    )
+  ) {
     return result('', 'unresolved', 'low');
   }
   const host = getDomain(target.hostname) || '';
   const label = host.split('.')[0];
-  if (label && !isPlatformName(label)) return result(cleanSlug(label), 'company domain', 'low');
+  if (label && !isPlatformName(label)) {
+    return result(cleanSlug(label), 'company domain', 'low');
+  }
   return result('', 'unresolved', 'low');
 }
 
-async function resolveCompany({ html, url, job = getStructuredJob(html, url), pageCompany = '', fetchImpl = publicFetch, signal }) {
+async function resolveCompany({
+  html,
+  url,
+  job = getStructuredJob(html, url),
+  pageCompany = '',
+  fetchImpl = publicFetch,
+  signal,
+}) {
   const organization = job?.hiringOrganization;
-  const structuredName = decodeHtml((Array.isArray(organization) ? organization[0] : organization)?.name);
+  const structuredName = decodeHtml(
+    (Array.isArray(organization) ? organization[0] : organization)?.name,
+  );
   // hiringOrganization identifies the employer, even when that employer also runs an ATS.
   // Only generic site/domain evidence should be filtered by platform name.
   if (structuredName) {
     return result(structuredName, 'JobPosting structured data', 'high');
   }
-  if (pageCompany && !isPlatformName(pageCompany)) return result(pageCompany, 'company website organization', 'medium');
+  if (pageCompany && !isPlatformName(pageCompany)) {
+    return result(pageCompany, 'company website organization', 'medium');
+  }
 
   // Some Workday tenants leave hiringOrganization empty but identify the employer
   // explicitly in the equal-opportunity statement. Ignore incidental company mentions.
   if (/(^|\.)myworkdayjobs\.com$/i.test(new URL(url).hostname)) {
     const description = decodeHtml(job?.description || getMetaContent(html, 'og:description'));
-    const employers = [...description.matchAll(/(?:^|[.!?]\s+)([\p{Lu}\p{N}][\p{L}\p{N}&,'’() -]{0,99}?)\s+is\s+an?\s+equal\s+opportunity\s+employer\b/giu)]
-      .map((match) => match[1].trim());
+    const employers = [
+      ...description.matchAll(
+        /(?:^|[.!?]\s+)([\p{Lu}\p{N}][\p{L}\p{N}&,'’() -]{0,99}?)\s+is\s+an?\s+equal\s+opportunity\s+employer\b/giu,
+      ),
+    ].map((match) => match[1].trim());
     const unique = [...new Set(employers)];
     if (unique.length === 1 && !/^(?:we|this company|the company|our company)$/i.test(unique[0])) {
       return result(unique[0], 'Workday employer statement', 'medium');
@@ -106,10 +159,16 @@ async function resolveCompany({ html, url, job = getStructuredJob(html, url), pa
 
   const details = atsDetails(url);
   const atsResult = await resolveFromAts(details, fetchImpl, signal);
-  if (atsResult) return atsResult;
+  if (atsResult) {
+    return atsResult;
+  }
   const metadata = genericMetadataCompany(html, url);
-  if (metadata.name) return metadata;
-  if (details?.account) return result(cleanSlug(details.account), `${details.provider} account (inferred)`, 'low');
+  if (metadata.name) {
+    return metadata;
+  }
+  if (details?.account) {
+    return result(cleanSlug(details.account), `${details.provider} account (inferred)`, 'low');
+  }
   return metadata;
 }
 

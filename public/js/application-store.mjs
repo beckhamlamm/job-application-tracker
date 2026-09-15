@@ -8,27 +8,44 @@ export function createApplicationStore(storage) {
     try {
       const saved = JSON.parse(storage.getItem(STORAGE_KEY)) || [];
       const migrationTime = Date.now();
-      return saved.map((item, index) => ({ ...item, createdAt: item.createdAt || migrationTime - index }));
+      return saved.map((item, index) => ({
+        ...item,
+        createdAt: item.createdAt || migrationTime - index,
+      }));
     } catch {
       return [];
     }
   }
 
   function persist(next) {
-    try { storage.setItem(STORAGE_KEY, JSON.stringify(next)); }
-    catch { throw new Error('Could not save applications. Browser storage may be full or unavailable. Please export a backup and try again.'); }
+    try {
+      storage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      throw new Error(
+        'Could not save applications. Browser storage may be full or unavailable. Please export a backup and try again.',
+      );
+    }
     applications = next;
   }
 
   return {
     all: () => applications.map((item) => ({ ...item })),
-    find: (id) => { const item = applications.find((item) => item.id === id); return item ? { ...item } : undefined; },
+    find: (id) => {
+      const item = applications.find((item) => item.id === id);
+      return item ? { ...item } : undefined;
+    },
     upsert(item) {
       const index = applications.findIndex((entry) => entry.id === item.id);
-      const stored = { ...item, createdAt: index >= 0 ? applications[index].createdAt : Date.now() };
+      const stored = {
+        ...item,
+        createdAt: index >= 0 ? applications[index].createdAt : Date.now(),
+      };
       const next = [...applications];
-      if (index >= 0) next[index] = stored;
-      else next.unshift(stored);
+      if (index >= 0) {
+        next[index] = stored;
+      } else {
+        next.unshift(stored);
+      }
       persist(next);
       return index >= 0 ? 'updated' : 'added';
     },
