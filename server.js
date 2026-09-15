@@ -6,6 +6,7 @@ const { parseJobPage } = require('./src/job-parser');
 const { resolveCompany } = require('./src/company-resolver');
 const { validatePublicUrl } = require('./src/url-security');
 const { publicFetch } = require('./src/public-fetch');
+const { resolveCustomJobBoard } = require('./src/custom-job-board');
 
 const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -31,6 +32,8 @@ async function parseRequest(req, res) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12_000);
   try {
+    const customJob = await resolveCustomJobBoard(target, { signal: controller.signal });
+    if (customJob) return sendJson(res, 200, customJob);
     const response = await publicFetch(target, {
       redirect: 'follow', signal: controller.signal,
       headers: { 'user-agent': 'Mozilla/5.0 (compatible; Applyboard/1.0)', accept: 'text/html' },
