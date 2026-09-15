@@ -1,57 +1,72 @@
-// Extracts job metadata once for role/date parsing and downstream company resolution.
-function decodeHtml(value = '') {
-  return (typeof value === 'string' ? value : '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&amp;/gi, '&').replace(/&quot;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'").replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/\s+/g, ' ').trim();
-}
-
-function findJobPosting(value) {
-  if (!value || typeof value !== 'object') return null;
-  const types = Array.isArray(value['@type']) ? value['@type'] : [value['@type']];
-  if (types.includes('JobPosting')) return value;
-
-  for (const child of Object.values(value)) {
-    const found = Array.isArray(child)
-      ? child.map(findJobPosting).find(Boolean)
-      : findJobPosting(child);
-    if (found) return found;
-  }
-  return null;
-}
-
+// Extracts job metadata from HTML and embedded structured records without executing page scripts.
+const { load } = require('cheerio');
+const { getDomain } = require('tldts');
+function decodeHtml(value = '') { return typeof value === 'string' ? load(value).text().replace(/\s+/g, ' ').trim() : ''; }
 function getMetaContent(html, key) {
-  const tags = html.match(/<meta\s[^>]*>/gi) || [];
-  const tag = tags.find((item) => new RegExp(`(?:name|property)=["']${key}["']`, 'i').test(item));
-  return tag?.match(/content=["']([^"']*)["']/i)?.[1] || '';
+  const $ = load(html);
+  return $('meta').filter((_, el) => [$(el).attr('name'), $(el).attr('property')].includes(key)).first().attr('content') || '';
 }
-
-function getStructuredJob(html) {
-  const scripts = html.match(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi) || [];
-  for (const script of scripts) {
-    try {
-      const raw = script.replace(/^<script\b[^>]*>/i, '').replace(/<\/script>$/i, '').trim();
-      const job = findJobPosting(JSON.parse(raw));
-      if (job) return job;
-    } catch { /* Ignore malformed structured data and use page metadata. */ }
-  }
-  return null;
+function objects(value, output = [], depth = 0) {
+  if (!value || typeof value !== 'object' || depth > 40) return output;
+  output.push(value);
+  for (const child of Object.values(value)) objects(child, output, depth + 1);
+  return output;
 }
-
-function parseJobPage(html, url) {
-  const job = getStructuredJob(html);
-  const titleTag = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '';
-  const role = decodeHtml(job?.title || getMetaContent(html, 'og:title') || titleTag)
-    .replace(/\s+[|–—-]\s+(LinkedIn|Indeed|Glassdoor).*$/i, '');
-
-  return {
-    url,
-    structuredJob: job,
-    role,
-    datePosted: String(job?.datePosted || '').slice(0, 10),
+const hasType = (value, type) => [value?.['@type']].flat().some((item) => typeof item === 'string' && item.split(/[\/#]/).pop() === type);
+function findJobPosting(value) { return objects(value).find((node) => hasType(node, 'JobPosting')) || null; }
+function getStructuredJob(html, url) {
+  const $ = load(html);
+  const nodes = [];
+  $('script').each((_, el) => {
+    if (!['application/ld+json', 'application/json'].includes(($(el).attr('type') || '').toLowerCase())) return;
+    try { objects(JSON.parse($(el).text()), nodes); } catch { /* Ignore malformed optional metadata. */ }
+  });
+  const jobs = nodes.filter((node) => hasType(node, 'JobPosting'));
+  const sameUrl = (candidate) => {
+    if (!candidate) return false;
+    try { const a = new URL(candidate, url); const b = new URL(url); return a.origin === b.origin && a.pathname === b.pathname; } catch { return false; }
   };
+  const selected = jobs.find((job) => sameUrl(job.url || job.mainEntityOfPage?.['@id'])) || (jobs.length === 1 ? jobs[0] : null);
+  if (selected) {
+    const resolve = (org) => org?.['@id'] ? { ...nodes.find((node) => node['@id'] === org['@id'] && node.name), ...org } : org;
+    return { ...selected, hiringOrganization: Array.isArray(selected.hiringOrganization) ? selected.hiringOrganization.map(resolve) : resolve(selected.hiringOrganization) };
+  }
+  const scopes = $('[itemtype], [typeof]').filter((_, el) => /(?:^|[\s/#:])JobPosting$/.test($(el).attr('itemtype') || $(el).attr('typeof') || ''));
+  if (scopes.length !== 1) return null;
+  const scope = scopes.first();
+  const field = (root, key) => root.find(`[itemprop~="${key}"], [property~="${key}"]`).first();
+  const value = (el) => el.attr('content') || el.attr('datetime') || el.text().trim();
+  const org = field(scope, 'hiringOrganization');
+  return { '@type': 'JobPosting', title: value(field(scope, 'title')), datePosted: value(field(scope, 'datePosted')),
+    description: value(field(scope, 'description')), hiringOrganization: { name: value(field(org, 'name')) || value(org) } };
 }
-
+function validDate(value) {
+  const date = typeof value === 'string' ? value.slice(0, 10) : '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return '';
+  const parsed = new Date(date);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().startsWith(date) ? date : '';
+}
+function parseJobPage(html, url) {
+  const $ = load(html);
+  const job = getStructuredJob(html, url);
+  let pageCompany = '';
+  $('script[type="application/ld+json"]').each((_, el) => {
+    try {
+      for (const node of objects(JSON.parse($(el).text()))) {
+        if (hasType(node, 'Organization') && node.name && node.url) {
+          try { if (getDomain(new URL(node.url, url).hostname) === getDomain(new URL(url).hostname)) pageCompany = decodeHtml(node.name); } catch {}
+        }
+      }
+    } catch {}
+  });
+  $('script, style, nav, footer, [hidden], [aria-hidden="true"]').remove();
+  const heading = $('main h1, article h1').first().text() || $('h1').first().text();
+  const generic = /^(?:careers?|jobs?|join (?:us|our team)|open (?:roles|positions)|opportunities|apply(?: now)?)$/i;
+  let role = decodeHtml(job?.title || job?.name);
+  if (!role) role = [heading, getMetaContent(html, 'og:title'), $('title').text()].map(decodeHtml)
+    .find((text) => text && !generic.test(text) && !/security checkpoint|access denied|verify.*browser/i.test(text)) || '';
+  const brand = getMetaContent(html, 'og:site_name');
+  if (brand && role.endsWith(` | ${brand}`)) role = role.slice(0, -brand.length - 3).trim();
+  return { url, structuredJob: job, role, datePosted: validDate(job?.datePosted), pageCompany };
+}
 module.exports = { decodeHtml, findJobPosting, getMetaContent, getStructuredJob, parseJobPage };

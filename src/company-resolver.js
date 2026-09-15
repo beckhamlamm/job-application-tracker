@@ -1,6 +1,7 @@
 // Resolves employer names through ranked structured-data, ATS API, metadata, and domain strategies.
 const { decodeHtml, getMetaContent, getStructuredJob } = require('./job-parser');
 const { publicFetch } = require('./public-fetch');
+const { getDomain } = require('tldts');
 
 const PLATFORM_NAMES = new Set([
   'ashby', 'greenhouse', 'indeed', 'lever', 'linkedin', 'smartrecruiters', 'workable', 'workday',
@@ -75,13 +76,13 @@ function genericMetadataCompany(html, url) {
   if (/(^|\.)(greenhouse\.io|lever\.co|ashbyhq\.com|smartrecruiters\.com|workable\.com|myworkdayjobs\.com|linkedin\.com|indeed\.com|glassdoor\.com)$/.test(target.hostname)) {
     return result('', 'unresolved', 'low');
   }
-  const host = target.hostname.replace(/^www\.|^careers\.|^jobs\./g, '');
+  const host = getDomain(target.hostname) || '';
   const label = host.split('.')[0];
   if (label && !isPlatformName(label)) return result(cleanSlug(label), 'company domain', 'low');
   return result('', 'unresolved', 'low');
 }
 
-async function resolveCompany({ html, url, job = getStructuredJob(html), fetchImpl = publicFetch, signal }) {
+async function resolveCompany({ html, url, job = getStructuredJob(html, url), pageCompany = '', fetchImpl = publicFetch, signal }) {
   const organization = job?.hiringOrganization;
   const structuredName = decodeHtml((Array.isArray(organization) ? organization[0] : organization)?.name);
   // hiringOrganization identifies the employer, even when that employer also runs an ATS.
@@ -89,6 +90,7 @@ async function resolveCompany({ html, url, job = getStructuredJob(html), fetchIm
   if (structuredName) {
     return result(structuredName, 'JobPosting structured data', 'high');
   }
+  if (pageCompany && !isPlatformName(pageCompany)) return result(pageCompany, 'company website organization', 'medium');
 
   // Some Workday tenants leave hiringOrganization empty but identify the employer
   // explicitly in the equal-opportunity statement. Ignore incidental company mentions.

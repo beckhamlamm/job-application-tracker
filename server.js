@@ -32,17 +32,19 @@ async function parseRequest(req, res) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12_000);
   try {
-    const customJob = await resolveCustomJobBoard(target, { signal: controller.signal });
-    if (customJob) return sendJson(res, 200, customJob);
     const response = await publicFetch(target, {
       redirect: 'follow', signal: controller.signal,
       headers: { 'user-agent': 'Mozilla/5.0 (compatible; Applyboard/1.0)', accept: 'text/html' },
     });
-    if (!response.ok) throw new Error(`The job page returned ${response.status}. You can still add it manually.`);
     const html = (await response.text()).slice(0, 4_000_000);
+    const blocked = !response.ok || /<title[^>]*>\s*(?:Vercel Security Checkpoint|Access Denied)/i.test(html);
+    const customJob = await resolveCustomJobBoard(target, { html: blocked ? '' : html, signal: controller.signal });
+    if (customJob) return sendJson(res, 200, customJob);
+    if (blocked) throw new Error('This website requires browser verification or is unavailable. Open it in your browser and enter the job details manually.');
     const parsedJob = parseJobPage(html, response.url);
-    const company = await resolveCompany({ html, url: response.url, job: parsedJob.structuredJob, signal: controller.signal });
+    const company = await resolveCompany({ html, url: response.url, job: parsedJob.structuredJob, pageCompany: parsedJob.pageCompany, signal: controller.signal });
     delete parsedJob.structuredJob;
+    delete parsedJob.pageCompany;
     sendJson(res, 200, {
       ...parsedJob,
       company: company.name,

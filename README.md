@@ -16,6 +16,7 @@ A lightweight job application tracker that turns a job posting URL into an edita
 Requires Node.js 18 or newer.
 
 ```bash
+npm ci
 npm start
 ```
 
@@ -31,6 +32,8 @@ npm test
 
 - `server.js` — HTTP routing and static file delivery
 - `src/job-parser.js` — job page metadata extraction
+- `src/custom-job-board.js` — discovers embedded Greenhouse links and verifies domain-derived board candidates against the original job URL; no company-specific mappings
+- `src/public-fetch.js` — validates DNS addresses, redirects, and response sizes
 - `src/company-resolver.js` — ranked structured-data, ATS API, metadata, and domain company resolution
 - `src/url-security.js` — public URL validation
 - `public/app.mjs` — browser event and rendering orchestration
@@ -41,6 +44,10 @@ npm test
 ## Notes
 
 Some job sites block automated page access or omit structured job metadata. Applyboard opens the edit form in those cases so you can enter any missing details manually.
+
+The general parser supports JSON-LD (including organization references), embedded JSON job records, microdata/RDFa, job headings, and company website metadata. It uses public-suffix-aware domain parsing for low-confidence company fallbacks. Inferred Greenhouse board names are accepted only if the job ID and returned job URL match. Posting dates are not inferred from edit timestamps.
+
+JavaScript is not executed: jobs available only after client-side rendering, sign-in, or browser verification may require manual entry. This is not a universal extraction guarantee. Tests use varied HTML fixtures plus live spot checks; they do not establish an accuracy percentage across the web.
 
 ## Roadmap
 
