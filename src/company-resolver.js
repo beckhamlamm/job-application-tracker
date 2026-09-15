@@ -90,6 +90,18 @@ async function resolveCompany({ html, url, job = getStructuredJob(html), fetchIm
     return result(structuredName, 'JobPosting structured data', 'high');
   }
 
+  // Some Workday tenants leave hiringOrganization empty but identify the employer
+  // explicitly in the equal-opportunity statement. Ignore incidental company mentions.
+  if (/(^|\.)myworkdayjobs\.com$/i.test(new URL(url).hostname)) {
+    const description = decodeHtml(job?.description || getMetaContent(html, 'og:description'));
+    const employers = [...description.matchAll(/(?:^|[.!?]\s+)([\p{Lu}\p{N}][\p{L}\p{N}&,'’() -]{0,99}?)\s+is\s+an?\s+equal\s+opportunity\s+employer\b/giu)]
+      .map((match) => match[1].trim());
+    const unique = [...new Set(employers)];
+    if (unique.length === 1 && !/^(?:we|this company|the company|our company)$/i.test(unique[0])) {
+      return result(unique[0], 'Workday employer statement', 'medium');
+    }
+  }
+
   const details = atsDetails(url);
   const atsResult = await resolveFromAts(details, fetchImpl, signal);
   if (atsResult) return atsResult;
