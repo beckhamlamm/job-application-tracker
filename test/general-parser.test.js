@@ -1,10 +1,52 @@
-// Exercises diverse custom career-page formats and guards against incorrect board matches.
+// Exercises general parsing behavior with synthetic HTML and mocked APIs, independent of live postings.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { parseJobPage, getMetaContent } = require('../src/job-parser');
 const { resolveCompany } = require('../src/company-resolver');
 const { resolveCustomJobBoard } = require('../src/custom-job-board');
 const { discoverBoards } = require('../src/custom-job-board');
+
+test('a hosted posting can identify its employer in text when structured organization is blank', async () => {
+  const url = 'https://example.wd5.myworkdayjobs.com/careers/job/123';
+  const html = `<script type="application/ld+json">${JSON.stringify({
+    '@type': 'JobPosting', title: 'Systems Engineer', hiringOrganization: { name: '' },
+    description: 'Our teams use Example Tools products. Northstar Labs is an Equal Opportunity Employer.',
+    datePosted: '2026-01-15',
+  })}</script>`;
+  const parsed = parseJobPage(html, url);
+  const company = await resolveCompany({ html, url, job: parsed.structuredJob, fetchImpl: () => assert.fail('page evidence needs no network') });
+  assert.equal(company.name, 'Northstar Labs');
+  assert.equal(parsed.role, 'Systems Engineer');
+  assert.equal(parsed.datePosted, '2026-01-15');
+});
+
+test('employer statements neither override structured employers nor resolve ambiguous evidence', async () => {
+  const url = 'https://example.wd5.myworkdayjobs.com/careers/job/123';
+  const resolve = (job) => resolveCompany({ html: '', url, job, fetchImpl: () => assert.fail('page evidence needs no network') });
+  assert.equal((await resolve({ hiringOrganization: { name: 'Example Studio' }, description: 'Northstar Labs is an Equal Opportunity Employer.' })).name, 'Example Studio');
+  for (const description of ['Experience with Example Tools and Workday products.', 'The company is an Equal Opportunity Employer.', 'Northstar Labs is an Equal Opportunity Employer. Example Studio is an Equal Opportunity Employer.']) {
+    assert.equal((await resolve({ description })).name, '');
+  }
+});
+
+test('a verified embedded board preserves the URL and does not treat an update date as a posting date', async () => {
+  const url = 'https://example.org/jobs/123?gh_jid=123&utm_source=test';
+  const endpoints = [];
+  const result = await resolveCustomJobBoard(url, { fetchImpl: async (endpoint) => {
+    endpoints.push(endpoint);
+    return { ok: true, json: async () => endpoint.endsWith('/jobs/123')
+      ? { id: 123, title: ' Software Engineer ', absolute_url: 'https://example.org/jobs/123', updated_at: '2026-01-15' }
+      : { name: 'Example Studio' } };
+  } });
+  assert.deepEqual(endpoints, [
+    'https://boards-api.greenhouse.io/v1/boards/example/jobs/123',
+    'https://boards-api.greenhouse.io/v1/boards/example',
+  ]);
+  assert.equal(result.company, 'Example Studio');
+  assert.equal(result.role, 'Software Engineer');
+  assert.equal(result.url, url);
+  assert.equal(result.datePosted, '');
+});
 
 test('a listing with multiple embedded job links is not treated as one posting', () => {
   assert.deepEqual(discoverBoards('https://example.org/careers', '<a href="https://boards.greenhouse.io/example/jobs/1">One</a><a href="https://boards.greenhouse.io/example/jobs/2">Two</a>'), []);
