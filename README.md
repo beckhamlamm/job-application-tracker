@@ -29,7 +29,7 @@ npm test
 ```
 
 For development checks, use Node 24 (see `.nvmrc`), then run `npm run validate`.
-Use `npm run format` to format JavaScript, JSON, and Markdown. Optional pre-commit setup and review conventions are documented in [CODING_STANDARDS.md](CODING_STANDARDS.md).
+Use `npm run format` to format JavaScript, JSON, and Markdown. To enable the optional repository-local pre-commit checks, run `npm run hooks:install` after reviewing any existing Git hook configuration.
 
 ## Project structure
 
