@@ -6,6 +6,7 @@ import {
   companyInitial,
   escapeHtml,
   formatDate,
+  pipelineSummary,
   today,
 } from './js/formatting.mjs';
 
@@ -48,9 +49,7 @@ function render() {
     applications.filter((item) => matchesSearch(item, term)),
     $('#sortSelect').value,
   );
-  const count = applications.length;
-  $('#applicationCount').textContent =
-    `${count === 1 ? 'There is' : 'There are'} ${count} ${count === 1 ? 'application' : 'applications'} in your pipeline`;
+  $('#applicationCount').textContent = pipelineSummary(applications);
   $('#emptyState').hidden = visible.length > 0;
   rows.innerHTML = visible.map(applicationRow).join('');
 }

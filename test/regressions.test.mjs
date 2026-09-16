@@ -1,7 +1,7 @@
 // Regression coverage for date boundaries, failed storage writes, and employer evidence ranking.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { today } from '../public/js/formatting.mjs';
+import { pipelineSummary, today } from '../public/js/formatting.mjs';
 import { createApplicationStore } from '../public/js/application-store.mjs';
 import resolver from '../src/company-resolver.js';
 
@@ -9,6 +9,28 @@ test('today uses the local calendar at evening and morning boundaries', () => {
   for (const hour of [0, 23]) {
     assert.equal(today(new Date(2026, 8, 14, hour, 30)), '2026-09-14');
   }
+});
+
+test('pipeline summary counts all applications and excludes rejected and withdrawn from active', () => {
+  assert.equal(
+    pipelineSummary([]),
+    'There are 0 applications in your pipeline (0 active applications)',
+  );
+  assert.equal(
+    pipelineSummary([{ status: 'Applied' }]),
+    'There is 1 application in your pipeline (1 active application)',
+  );
+  assert.equal(
+    pipelineSummary([{ status: 'Rejected' }]),
+    'There is 1 application in your pipeline (0 active applications)',
+  );
+  const applications = ['Offer', 'Interviewing', 'Applied', 'Rejected', 'Withdrawn'].map(
+    (status) => ({ status }),
+  );
+  assert.equal(
+    pipelineSummary(applications),
+    'There are 5 applications in your pipeline (3 active applications)',
+  );
 });
 
 test('failed add, edit and remove preserve the saved collection', () => {

@@ -1,4 +1,12 @@
 // Provides shared display, escaping, date, and CSV formatting helpers for the browser UI.
+export function pipelineSummary(applications) {
+  const count = applications.length;
+  const activeCount = applications.filter(
+    ({ status }) => !['Rejected', 'Withdrawn'].includes(status),
+  ).length;
+  return `${count === 1 ? 'There is' : 'There are'} ${count} ${count === 1 ? 'application' : 'applications'} in your pipeline (${activeCount} active ${activeCount === 1 ? 'application' : 'applications'})`;
+}
+
 export function today(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
