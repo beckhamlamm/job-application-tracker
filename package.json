@@ -9,8 +9,8 @@
     "test": "node --test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write \"**/*.{js,mjs,json,md}\"",
-    "format:check": "prettier --check \"**/*.{js,mjs,json,md}\"",
+    "format": "prettier --write \"**/*.{js,mjs,md}\" package.json",
+    "format:check": "prettier --check \"**/*.{js,mjs,md}\" package.json",
     "validate": "npm run lint && npm run format:check && npm test",
     "hooks:install": "git config --local core.hooksPath .githooks"
   },
@@ -26,5 +26,12 @@
     "eslint": "10.10.0",
     "globals": "16.5.0",
     "prettier": "3.9.6"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": true,
+    "tabWidth": 2,
+    "trailingComma": "all",
+    "printWidth": 100
   }
 }
