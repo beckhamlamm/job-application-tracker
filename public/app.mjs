@@ -141,9 +141,12 @@ rows.addEventListener('click', (event) => {
     try {
       store.setStarred(id, !item.starred);
       render();
-      [...rows.querySelectorAll('.star-button')]
-        .find((starButton) => starButton.dataset.id === id)
-        ?.focus();
+      // Keyboard activation needs focus restored after replacing the row; pointer clicks do not.
+      if (event.detail === 0) {
+        [...rows.querySelectorAll('.star-button')]
+          .find((starButton) => starButton.dataset.id === id)
+          ?.focus();
+      }
       toast(item.starred ? 'Application unstarred' : 'Application starred');
     } catch (error) {
       alert(error.message);
