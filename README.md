@@ -7,6 +7,7 @@ A lightweight job application tracker that turns a job posting URL into an edita
 - Parse company, role, and posting date from a URL
 - Review and correct extracted details before saving
 - Track application date and pipeline status
+- Star important applications to keep them above the selected sort order
 - Edit, search, delete, and export applications to CSV
 - No account or database required; data stays in browser storage
 - Responsive layout for desktop and mobile

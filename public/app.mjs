@@ -34,6 +34,7 @@ function applicationRow(item) {
     ? `<a class="role-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${escapeHtml(item.role)} ↗</a>`
     : `<span class="role-link">${escapeHtml(item.role)}</span>`;
   return `<tr>
+    <td class="star-cell"><button type="button" class="star-button${item.starred ? ' is-starred' : ''}" data-id="${escapeHtml(item.id)}" aria-label="${item.starred ? 'Remove star from' : 'Star'} ${escapeHtml(item.company)} application" aria-pressed="${item.starred === true}" title="${item.starred ? 'Unstar application' : 'Star application'}">${item.starred ? '★' : '☆'}</button></td>
     <td><div class="company-cell"><span class="company-mark">${escapeHtml(companyInitial(item.company))}</span>${escapeHtml(item.company)}</div></td>
     <td>${role}</td>
     <td class="date">${formatDate(item.datePosted)}</td><td class="date">${formatDate(item.dateApplied)}</td>
@@ -127,18 +128,32 @@ $('#applicationForm').addEventListener('submit', (event) => {
 });
 
 rows.addEventListener('click', (event) => {
-  const id = event.target.dataset.id;
+  const button = event.target.closest('button[data-id]');
+  const id = button?.dataset.id;
   if (!id) {
     return;
   }
   const item = store.find(id);
-  if (event.target.classList.contains('edit')) {
+  if (!item) {
+    return;
+  }
+  if (button.classList.contains('star-button')) {
+    try {
+      store.setStarred(id, !item.starred);
+      render();
+      [...rows.querySelectorAll('.star-button')]
+        .find((starButton) => starButton.dataset.id === id)
+        ?.focus();
+      toast(item.starred ? 'Application unstarred' : 'Application starred');
+    } catch (error) {
+      alert(error.message);
+    }
+    return;
+  }
+  if (button.classList.contains('edit')) {
     openDialog(item);
   }
-  if (
-    event.target.classList.contains('delete') &&
-    confirm(`Remove ${item.role} at ${item.company}?`)
-  ) {
+  if (button.classList.contains('delete') && confirm(`Remove ${item.role} at ${item.company}?`)) {
     try {
       store.remove(id);
     } catch (error) {

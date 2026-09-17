@@ -62,3 +62,26 @@ test('puts missing posted dates last and breaks ties by most recently added', ()
     ['alpha', 'Beta', 'Gamma'],
   );
 });
+
+test('starred applications come first while each group follows the selected sort', () => {
+  const mixed = [
+    { ...applications[0], starred: true },
+    { ...applications[1], starred: true },
+    { ...applications[2], starred: false },
+  ];
+  for (const [mode, expected] of [
+    ['applied', ['alpha', 'Beta', 'Gamma']],
+    ['posted', ['alpha', 'Beta', 'Gamma']],
+    ['companyReverse', ['Beta', 'alpha', 'Gamma']],
+    ['statusReverse', ['Beta', 'alpha', 'Gamma']],
+  ]) {
+    assert.deepEqual(
+      sortApplications(mixed, mode).map((item) => item.company),
+      expected,
+    );
+  }
+  assert.deepEqual(
+    mixed.map((item) => item.company),
+    ['Beta', 'alpha', 'Gamma'],
+  );
+});

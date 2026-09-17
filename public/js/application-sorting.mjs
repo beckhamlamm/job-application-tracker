@@ -35,5 +35,8 @@ const comparators = {
 };
 
 export function sortApplications(items, mode = 'applied') {
-  return [...items].sort(comparators[mode] || comparators.applied);
+  const compareWithinGroup = comparators[mode] || comparators.applied;
+  return [...items].sort(
+    (a, b) => Number(b.starred === true) - Number(a.starred === true) || compareWithinGroup(a, b),
+  );
 }

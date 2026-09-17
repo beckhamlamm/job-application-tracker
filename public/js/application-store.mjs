@@ -39,6 +39,7 @@ export function createApplicationStore(storage) {
       const stored = {
         ...item,
         createdAt: index >= 0 ? applications[index].createdAt : Date.now(),
+        starred: index >= 0 ? applications[index].starred === true : item.starred === true,
       };
       const next = [...applications];
       if (index >= 0) {
@@ -48,6 +49,16 @@ export function createApplicationStore(storage) {
       }
       persist(next);
       return index >= 0 ? 'updated' : 'added';
+    },
+    setStarred(id, starred) {
+      const index = applications.findIndex((item) => item.id === id);
+      if (index < 0) {
+        return false;
+      }
+      const next = [...applications];
+      next[index] = { ...next[index], starred: starred === true };
+      persist(next);
+      return true;
     },
     remove(id) {
       persist(applications.filter((item) => item.id !== id));
