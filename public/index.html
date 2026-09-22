@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="A calm, fast job application tracker.">
-  <title>Applyboard — Job application tracker</title>
+  <title>ApplyBoard — Job application tracker</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="#"><span class="brand-mark">A</span><span>Applyboard</span></a>
+    <a class="brand" href="#"><span class="brand-mark">A</span><span>ApplyBoard</span></a>
     <div class="header-actions">
       <button class="button secondary" id="exportButton" type="button">Export CSV</button>
       <button class="button primary compact" id="manualButton" type="button"><span>＋</span> Add manually</button>
@@ -68,7 +68,7 @@
       <div class="form-grid"><label>Company<input id="company" required placeholder="Acme, Inc."></label><label>Role<input id="role" required placeholder="Product Designer"></label></div>
       <input type="hidden" id="companySourceValue"><input type="hidden" id="companyConfidence">
       <div class="form-grid"><label>Date posted<input id="datePosted" type="date"></label><label>Date applied<input id="dateApplied" type="date" required></label></div>
-      <label>Status<select id="status"><option>Applied</option><option>Interviewing</option><option>Offer</option><option>Rejected</option><option>Withdrawn</option></select></label>
+      <label>Status<select id="status"><option>Applied</option><option>OA</option><option>Interviewing</option><option>Offer</option><option>Rejected</option><option>Withdrawn</option></select></label>
       <div class="dialog-actions"><button class="button secondary" id="cancelDialog" type="button">Cancel</button><button class="button primary" type="submit">Save application</button></div>
     </form>
   </dialog>

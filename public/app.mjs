@@ -4,6 +4,7 @@ import { sortApplications } from './js/application-sorting.mjs';
 import {
   applicationsToCsv,
   companyInitial,
+  csvFilename,
   escapeHtml,
   formatDate,
   pipelineSummary,
@@ -186,7 +187,7 @@ $('#exportButton').addEventListener('click', () => {
   link.href = URL.createObjectURL(
     new Blob([applicationsToCsv(applications)], { type: 'text/csv' }),
   );
-  link.download = `applications-${today()}.csv`;
+  link.download = csvFilename();
   link.click();
   URL.revokeObjectURL(link.href);
   toast('CSV exported');

@@ -1,7 +1,7 @@
 // Regression coverage for date boundaries, failed storage writes, and employer evidence ranking.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pipelineSummary, today } from '../public/js/formatting.mjs';
+import { csvFilename, pipelineSummary, today } from '../public/js/formatting.mjs';
 import { createApplicationStore } from '../public/js/application-store.mjs';
 import resolver from '../src/company-resolver.js';
 
@@ -9,6 +9,13 @@ test('today uses the local calendar at evening and morning boundaries', () => {
   for (const hour of [0, 23]) {
     assert.equal(today(new Date(2026, 8, 14, hour, 30)), '2026-09-14');
   }
+});
+
+test('CSV filename uses ApplyBoard and local month-day-year order', () => {
+  for (const hour of [0, 23]) {
+    assert.equal(csvFilename(new Date(2026, 8, 17, hour, 30)), 'ApplyBoard-09-17-2026.csv');
+  }
+  assert.equal(csvFilename(new Date(2027, 0, 2)), 'ApplyBoard-01-02-2027.csv');
 });
 
 test('pipeline summary counts all applications and excludes rejected and withdrawn from active', () => {

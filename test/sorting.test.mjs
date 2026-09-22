@@ -56,6 +56,19 @@ test('sorts statuses in both priority directions', () => {
   );
 });
 
+test('places OA between Applied and Interviewing in both status sort directions', () => {
+  const statuses = ['Applied', 'OA', 'Interviewing', 'Offer', 'Rejected', 'Withdrawn'];
+  const items = statuses.map((status, createdAt) => ({ status, createdAt }));
+  assert.deepEqual(
+    sortApplications(items, 'status').map((item) => item.status),
+    ['Offer', 'Interviewing', 'OA', 'Applied', 'Rejected', 'Withdrawn'],
+  );
+  assert.deepEqual(
+    sortApplications(items, 'statusReverse').map((item) => item.status),
+    ['Withdrawn', 'Rejected', 'Applied', 'OA', 'Interviewing', 'Offer'],
+  );
+});
+
 test('puts missing posted dates last and breaks ties by most recently added', () => {
   assert.deepEqual(
     sortApplications(applications, 'posted').map((item) => item.company),

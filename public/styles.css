@@ -7,3 +7,6 @@
 /* Reveals each row's star from the left edge while keeping it available to keyboard and touch users. */
 .star-heading,.star-cell{width:34px;padding-left:4px;padding-right:0}.star-button{display:grid;place-items:center;width:30px;height:30px;border:0;border-radius:7px;background:transparent;color:#9b670d;font-size:18px;line-height:1;cursor:pointer;opacity:0;transition:opacity .15s ease,background .15s ease}.star-cell:hover .star-button,.star-button:focus-visible,.star-button.is-starred{opacity:1}.star-button:hover,.star-button:focus-visible{background:#fff3d8}.star-button:focus-visible{outline:2px solid var(--green);outline-offset:2px}@media(hover:none){.star-button{opacity:1}}
 .star-heading+th,.star-cell+td{padding-left:12px}
+
+/* Online assessments share the interviewing status badge colors. */
+.status.oa{background:#fff4df;color:#9a611b}

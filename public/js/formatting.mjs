@@ -11,6 +11,11 @@ export function today(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
+export function csvFilename(date = new Date()) {
+  const [year, month, day] = today(date).split('-');
+  return `ApplyBoard-${month}-${day}-${year}.csv`;
+}
+
 export function escapeHtml(value = '') {
   const node = document.createElement('div');
   node.textContent = value;
