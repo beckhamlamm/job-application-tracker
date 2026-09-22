@@ -1,8 +1,8 @@
 // Regression coverage for date boundaries, failed storage writes, and employer evidence ranking.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { csvFilename, pipelineSummary, today } from '../public/js/formatting.mjs';
-import { createApplicationStore } from '../public/js/application-store.mjs';
+import { csvFilename, pipelineSummary, today } from '../src/lib/applications/formatting.ts';
+import { createApplicationStore } from '../src/lib/applications/store.ts';
 import resolver from '../src/company-resolver.js';
 
 test('today uses the local calendar at evening and morning boundaries', () => {
@@ -48,13 +48,14 @@ test('failed add, edit and remove preserve the saved collection', () => {
       throw Error('quota');
     },
   });
+  const loaded = store.all();
   for (const action of [
     () => store.upsert({ id: 'b' }),
     () => store.upsert({ id: 'a', company: 'Changed' }),
     () => store.remove('a'),
   ]) {
     assert.throws(action, /Could not save/);
-    assert.deepEqual(store.all(), original);
+    assert.deepEqual(store.all(), loaded);
   }
 });
 

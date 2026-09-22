@@ -1,7 +1,7 @@
 // Verifies application persistence, updates, creation timestamps, and removal behavior.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createApplicationStore } from '../public/js/application-store.mjs';
+import { createApplicationStore } from '../src/lib/applications/store.ts';
 
 function memoryStorage(initial = null) {
   let value = initial;
@@ -13,6 +13,29 @@ function memoryStorage(initial = null) {
     value: () => value,
   };
 }
+
+test('loads legacy optional fields without writing to saved data', () => {
+  const original = JSON.stringify([{ id: 'legacy', company: 'Acme' }]);
+  const storage = memoryStorage(original);
+  const item = createApplicationStore(storage).find('legacy');
+  assert.equal(item.status, 'Applied');
+  assert.equal(item.role, '');
+  assert.ok(item.createdAt);
+  assert.equal(storage.value(), original);
+});
+
+test('rejects malformed records and duplicate IDs without replacing storage', () => {
+  for (const original of [
+    'broken json',
+    '{}',
+    '[{"id":"a","company":7}]',
+    '[{"id":"a"},{"id":"a"}]',
+  ]) {
+    const storage = memoryStorage(original);
+    assert.throws(() => createApplicationStore(storage), /left untouched/);
+    assert.equal(storage.value(), original);
+  }
+});
 
 test('adds and persists an application', () => {
   const storage = memoryStorage();
