@@ -14,6 +14,9 @@
 /* Contains absolutely positioned accessible headings within the horizontally scrolling table. */
 .table-scroll{position:relative}
 
+/* Give the applications table more room on desktop while retaining the mobile gutters. */
+@media(min-width:701px){.dashboard{max-width:1320px;width:90%;padding-left:12px;padding-right:12px}}
+
 /* Align search and sort controls without changing their responsive widths. */
 .search{height:39px;align-items:center;padding:0 10px;font-size:12px}.search input{min-width:0;font-size:inherit}.search svg{flex-shrink:0}
 
