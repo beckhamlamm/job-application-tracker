@@ -8,6 +8,16 @@ test('custom calendars support picking, typing, clearing, keyboard navigation, a
   await page.getByRole('button', { name: 'Add manually' }).click();
   await page.getByLabel('Company', { exact: true }).fill('Calendar Test');
   await page.getByLabel('Role', { exact: true }).fill('Engineer');
+  const companyFont = await page.getByLabel('Company', { exact: true }).evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { family: style.fontFamily, size: style.fontSize, weight: style.fontWeight };
+  });
+  for (const label of ['Date posted', 'Date applied']) {
+    const field = page.getByLabel(label, { exact: true });
+    await expect(field).toHaveCSS('font-family', companyFont.family);
+    await expect(field).toHaveCSS('font-size', companyFont.size);
+    await expect(field).toHaveCSS('font-weight', companyFont.weight);
+  }
   await page.getByLabel('Date posted', { exact: true }).fill('02-15-2024');
   await page.getByRole('button', { name: 'Choose date posted' }).click();
   const calendar = page.getByRole('region', { name: 'Date posted calendar' });
