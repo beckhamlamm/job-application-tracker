@@ -97,7 +97,7 @@ export default function ApplicationDialog({
               id="company"
               required
               defaultValue={draft.company || ''}
-              placeholder="Acme, Inc."
+              placeholder="Lam, Inc."
               onChange={() => setCompanyChanged(true)}
             />
           </label>
@@ -107,7 +107,7 @@ export default function ApplicationDialog({
               name="role"
               required
               defaultValue={draft.role || ''}
-              placeholder="Product Designer"
+              placeholder="Software Engineer"
             />
           </label>
         </div>
