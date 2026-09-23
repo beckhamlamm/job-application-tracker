@@ -1,6 +1,52 @@
 // Exercises storage migration, React interactions, CSV downloads, and parser failures in a fresh browser.
 import { test, expect } from '@playwright/test';
 const storageKey = 'applyboard.applications.v1';
+test('custom calendars support picking, typing, clearing, keyboard navigation, and mobile layout', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Add manually' }).click();
+  await page.getByLabel('Company', { exact: true }).fill('Calendar Test');
+  await page.getByLabel('Role', { exact: true }).fill('Engineer');
+  await page.getByLabel('Date posted', { exact: true }).fill('02-15-2024');
+  await page.getByRole('button', { name: 'Choose date posted' }).click();
+  const calendar = page.getByRole('region', { name: 'Date posted calendar' });
+  await expect(calendar).toContainText('February 2024');
+  await expect(calendar.getByRole('button', { name: 'Today', exact: true })).toHaveCount(0);
+  await expect(calendar.getByRole('button', { name: 'Done', exact: true })).toHaveCount(0);
+  await calendar.getByRole('button', { name: 'Next month' }).click();
+  await expect(calendar).toContainText('March 2024');
+  await calendar.getByRole('button', { name: 'Previous month' }).click();
+  await calendar.getByRole('button', { name: '02-28-2024' }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(calendar.getByRole('button', { name: '02-29-2024' })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByLabel('Date posted', { exact: true })).toHaveValue('02-29-2024');
+  await page.getByRole('button', { name: 'Choose date posted' }).click();
+  await page.keyboard.press('Escape');
+  await expect(calendar).toBeHidden();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button', { name: 'Choose date posted' }).click();
+  await expect(calendar.getByRole('button', { name: 'Clear date' })).toHaveCount(0);
+  await page.getByLabel('Date posted', { exact: true }).fill('');
+  await expect(page.getByLabel('Date posted', { exact: true })).toHaveValue('');
+  await page.getByLabel('Date applied', { exact: true }).fill('02-30-2026');
+  await page.getByRole('button', { name: 'Save application' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByLabel('Date applied', { exact: true }).fill('09-23-2026');
+  await page.getByRole('button', { name: 'Choose date applied' }).click();
+  await page.screenshot({ path: testInfo.outputPath('calendar-desktop.png') });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('region', { name: 'Date applied calendar' }).scrollIntoViewIfNeeded();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.screenshot({ path: testInfo.outputPath('calendar-mobile.png') });
+  await page.getByRole('button', { name: '09-24-2026' }).click();
+  await page.getByRole('button', { name: 'Save application' }).click();
+  await page.reload();
+  await page.getByRole('button', { name: 'Edit Calendar Test application' }).click();
+  await expect(page.getByLabel('Date applied', { exact: true })).toHaveValue('09-24-2026');
+  await expect(page.getByLabel('Date posted', { exact: true })).toHaveValue('');
+});
 test.beforeEach(async ({ page }) => {
   page.on('pageerror', (error) => {
     throw error;
@@ -157,7 +203,7 @@ test('parsed details can be reviewed and saved on mobile', async ({ page }, test
   await page.getByRole('button', { name: 'Track application' }).click();
   await expect(page.getByLabel('Company', { exact: true })).toHaveValue('Example Labs');
   await expect(page.getByLabel('Role', { exact: true })).toHaveValue('Software Engineer');
-  await expect(page.getByLabel('Date posted', { exact: true })).toHaveValue('2026-01-01');
+  await expect(page.getByLabel('Date posted', { exact: true })).toHaveValue('01-01-2026');
   await page.getByRole('button', { name: 'Save application' }).click();
   await expect(page.locator('tbody tr')).toContainText('Example Labs');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);

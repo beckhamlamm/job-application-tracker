@@ -7,6 +7,8 @@ import {
   type ApplicationInput,
 } from '../../lib/applications/types';
 import { today } from '../../lib/applications/formatting';
+import DateField from './DateField';
+import { parseCalendarDate } from '../../lib/applications/calendar';
 export default function ApplicationDialog({
   draft,
   onSave,
@@ -37,6 +39,13 @@ export default function ApplicationDialog({
       return;
     }
     const url = value('url');
+    if (
+      !parseCalendarDate(value('dateApplied')) ||
+      (value('datePosted') && !parseCalendarDate(value('datePosted')))
+    ) {
+      setError('Enter valid dates in MM-DD-YYYY format.');
+      return;
+    }
     if (url && !/^https?:\/\//i.test(url)) {
       setError('Use an http:// or https:// job URL.');
       return;
@@ -103,19 +112,13 @@ export default function ApplicationDialog({
           </label>
         </div>
         <div className="form-grid">
-          <label>
-            Date posted
-            <input name="datePosted" type="date" defaultValue={draft.datePosted || ''} />
-          </label>
-          <label>
-            Date applied
-            <input
-              name="dateApplied"
-              type="date"
-              required
-              defaultValue={draft.dateApplied || today()}
-            />
-          </label>
+          <DateField name="datePosted" label="Date posted" initialValue={draft.datePosted || ''} />
+          <DateField
+            name="dateApplied"
+            label="Date applied"
+            initialValue={draft.dateApplied || today()}
+            required
+          />
         </div>
         <label>
           Status
