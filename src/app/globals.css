@@ -14,6 +14,9 @@
 /* Contains absolutely positioned accessible headings within the horizontally scrolling table. */
 .table-scroll{position:relative}
 
+/* Keep posted and applied dates compact and on one line, including two-digit days. */
+td.date{font-size:14px;white-space:nowrap}
+
 /* Give the applications table more room on desktop while retaining the mobile gutters. */
 @media(min-width:701px){.dashboard{max-width:1320px;width:90%;padding-left:12px;padding-right:12px}}
 
