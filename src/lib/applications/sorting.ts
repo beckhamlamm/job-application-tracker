@@ -1,12 +1,13 @@
 // Defines non-mutating sort strategies for application dates, companies, and statuses.
-export const STATUS_ORDER = ['Offer', 'Interviewing', 'OA', 'Applied', 'Rejected', 'Withdrawn'];
+import { STATUSES, STATUS_META, type Application, type SortMode } from './types';
+export const STATUS_ORDER = [...STATUSES].sort((a, b) => STATUS_META[a].rank - STATUS_META[b].rank);
 
-function newestAddedFirst(a, b) {
+function newestAddedFirst(a: Application, b: Application) {
   return (b.createdAt || 0) - (a.createdAt || 0);
 }
 
-function newestDateFirst(field) {
-  return (a, b) => {
+function newestDateFirst(field: 'dateApplied' | 'datePosted') {
+  return (a: Application, b: Application) => {
     if (!a[field] && !b[field]) {
       return newestAddedFirst(a, b);
     }
@@ -20,8 +21,8 @@ function newestDateFirst(field) {
   };
 }
 
-const statusRank = (item) => STATUS_ORDER.indexOf(item.status);
-const comparators = {
+const statusRank = (item: Application) => STATUS_META[item.status].rank;
+const comparators: Record<SortMode, (a: Application, b: Application) => number> = {
   applied: newestDateFirst('dateApplied'),
   posted: newestDateFirst('datePosted'),
   company: (a, b) =>
@@ -34,7 +35,7 @@ const comparators = {
   statusReverse: (a, b) => statusRank(b) - statusRank(a) || newestAddedFirst(a, b),
 };
 
-export function sortApplications(items, mode = 'applied') {
+export function sortApplications(items: Application[], mode: SortMode = 'applied') {
   const compareWithinGroup = comparators[mode] || comparators.applied;
   return [...items].sort(
     (a, b) => Number(b.starred === true) - Number(a.starred === true) || compareWithinGroup(a, b),

@@ -1,5 +1,6 @@
-// Provides shared display, escaping, date, and CSV formatting helpers for the browser UI.
-export function pipelineSummary(applications) {
+// Provides shared display, date, and CSV formatting helpers for the browser UI.
+import type { Application } from './types';
+export function pipelineSummary(applications: Pick<Application, 'status'>[]) {
   const count = applications.length;
   const activeCount = applications.filter(
     ({ status }) => !['Rejected', 'Withdrawn'].includes(status),
@@ -16,14 +17,12 @@ export function csvFilename(date = new Date()) {
   return `ApplyBoard-${month}-${day}-${year}.csv`;
 }
 
-export function escapeHtml(value = '') {
-  const node = document.createElement('div');
-  node.textContent = value;
-  return node.innerHTML;
-}
-
-export function formatDate(value) {
+export function formatDate(value: string) {
   if (!value) {
+    return '—';
+  }
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) {
     return '—';
   }
   return new Intl.DateTimeFormat(undefined, {
@@ -31,16 +30,16 @@ export function formatDate(value) {
     day: 'numeric',
     year: 'numeric',
     timeZone: 'UTC',
-  }).format(new Date(`${value}T00:00:00Z`));
+  }).format(date);
 }
 
 export function companyInitial(value = '') {
   return value.trim().charAt(0).toUpperCase() || '?';
 }
 
-export function applicationsToCsv(applications) {
+export function applicationsToCsv(applications: Application[]) {
   const fields = ['Company', 'Role', 'URL', 'Date Posted', 'Date Applied', 'Status'];
-  const quote = (value) => `"${String(value || '').replaceAll('"', '""')}"`;
+  const quote = (value: string) => `"${String(value || '').replaceAll('"', '""')}"`;
   const records = applications.map((item) => [
     item.company,
     item.role,
