@@ -5,6 +5,9 @@ test('custom calendars support picking, typing, clearing, keyboard navigation, a
   page,
 }, testInfo) => {
   await page.goto('/');
+  await expect(page.locator('.search')).toHaveCSS('height', '39px');
+  await expect(page.locator('.sort-control')).toHaveCSS('height', '39px');
+  await expect(page.getByLabel('Search applications')).toHaveCSS('font-size', '12px');
   await page.getByRole('button', { name: 'Add manually' }).click();
   await page.getByLabel('Company', { exact: true }).fill('Calendar Test');
   await page.getByLabel('Role', { exact: true }).fill('Engineer');

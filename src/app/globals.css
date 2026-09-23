@@ -14,6 +14,9 @@
 /* Contains absolutely positioned accessible headings within the horizontally scrolling table. */
 .table-scroll{position:relative}
 
+/* Align search and sort controls without changing their responsive widths. */
+.search{height:39px;align-items:center;padding:0 10px;font-size:12px}.search input{min-width:0;font-size:inherit}.search svg{flex-shrink:0}
+
 /* Date inputs sit outside labels, so explicitly share the other form fields' typography. */
 dialog input,dialog select{font-family:inherit;font-size:13px;font-weight:600}
 
