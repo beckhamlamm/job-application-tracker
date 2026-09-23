@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useApplications } from '../../hooks/useApplications';
 import { sortApplications } from '../../lib/applications/sorting';
-import { applicationsToCsv, csvFilename, pipelineSummary } from '../../lib/applications/formatting';
+import { applicationsToCsv, csvFilename } from '../../lib/applications/formatting';
+import ApplicationInfo from './ApplicationInfo';
 import type { ApplicationDraft, SortMode } from '../../lib/applications/types';
 import ApplicationTable from './ApplicationTable';
 import ApplicationDialog from './ApplicationDialog';
@@ -77,10 +78,13 @@ export default function ApplicationBoard() {
         <section className="dashboard">
           <div className="section-heading">
             <div>
-              <h2>Your applications</h2>
+              <div className="application-heading">
+                <h2>Your applications</h2>
+                {ready && <ApplicationInfo items={applications} />}
+              </div>
               <p>
                 {ready
-                  ? pipelineSummary(applications)
+                  ? null
                   : loadError
                     ? 'Applications unavailable'
                     : 'Loading your applications…'}

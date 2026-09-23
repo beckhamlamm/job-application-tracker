@@ -28,6 +28,40 @@ const applications = [
     createdAt: 2,
   },
 ];
+test('status information shows all nonzero counts in priority order and ignores search filters', async ({
+  page,
+}) => {
+  await page.addInitScript(
+    ({ key, item }) => {
+      localStorage.setItem(
+        key,
+        JSON.stringify(
+          ['Withdrawn', 'Applied', 'OA', 'Interviewing', 'Rejected', 'Offer', 'Applied'].map(
+            (status, index) => ({ ...item, id: String(index), status }),
+          ),
+        ),
+      );
+    },
+    { key: storageKey, item: applications[0] },
+  );
+  await page.goto('/');
+  await page.getByLabel('Search applications').fill('no matching company');
+  const info = page.getByRole('button', { name: 'Application status counts' });
+  await info.focus();
+  await expect(page.getByRole('tooltip').locator('span')).toHaveText([
+    '1 offer application',
+    '1 interviewing application',
+    '1 OA application',
+    '2 active applications',
+    '1 rejected application',
+    '1 withdrawn application',
+  ]);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('tooltip')).toBeHidden();
+  await info.click();
+  await expect(page.getByRole('tooltip')).toBeVisible();
+});
+
 test('saved applications survive editing, starring, sorting, and reload', async ({ page }) => {
   await page.addInitScript(
     ({ key, items }) => {
@@ -38,9 +72,14 @@ test('saved applications survive editing, starring, sorting, and reload', async 
     { key: storageKey, items: applications },
   );
   await page.goto('/');
-  await expect(
-    page.getByText('There are 2 applications in your pipeline (2 active applications)'),
-  ).toBeVisible();
+  await page.getByRole('button', { name: 'Application status counts' }).hover();
+  await expect(page.getByRole('tooltip')).toBeVisible();
+  await expect(page.getByRole('tooltip').locator('span')).toHaveText([
+    '1 OA application',
+    '1 active application',
+  ]);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('tooltip')).toBeHidden();
   await expect(page.locator('tbody tr').first()).toContainText('Beta');
   await page.getByRole('button', { name: 'Star Alpha application', exact: true }).click();
   await expect(page.locator('tbody tr').first()).toContainText('Alpha');
@@ -118,7 +157,7 @@ test('parsed details can be reviewed and saved on mobile', async ({ page }, test
   await page.getByRole('button', { name: 'Track application' }).click();
   await expect(page.getByLabel('Company', { exact: true })).toHaveValue('Example Labs');
   await expect(page.getByLabel('Role', { exact: true })).toHaveValue('Software Engineer');
-  await expect(page.getByLabel('Date posted')).toHaveValue('2026-01-01');
+  await expect(page.getByLabel('Date posted', { exact: true })).toHaveValue('2026-01-01');
   await page.getByRole('button', { name: 'Save application' }).click();
   await expect(page.locator('tbody tr')).toContainText('Example Labs');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);

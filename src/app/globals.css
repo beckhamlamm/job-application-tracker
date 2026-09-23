@@ -13,3 +13,6 @@
 
 /* Contains absolutely positioned accessible headings within the horizontally scrolling table. */
 .table-scroll{position:relative}
+
+/* Keeps status counts accessible without adding a permanent summary beneath the heading. */
+.application-heading{display:flex;align-items:center;gap:8px}.application-heading h2{margin:0}.application-info{position:relative;display:inline-flex}.application-info-button{display:grid;place-items:center;width:28px;height:28px;padding:3px;border:0;background:transparent;color:var(--muted);cursor:pointer;border-radius:50%}.application-info-button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}.application-info-button .info-dot{fill:currentColor;stroke:none}.application-info-button:focus-visible{outline:2px solid var(--green);outline-offset:2px}.application-info-tooltip{visibility:hidden;position:absolute;top:100%;right:0;z-index:20;min-width:190px;padding:12px 15px;background:var(--ink);color:white;border-radius:9px;box-shadow:var(--shadow);font-size:13px;line-height:1.8;white-space:nowrap}.application-info-tooltip>span{display:block}.application-info:not(.dismissed):hover .application-info-tooltip,.application-info:not(.dismissed):focus-within .application-info-tooltip{visibility:visible}
