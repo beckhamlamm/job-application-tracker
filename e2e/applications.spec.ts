@@ -108,6 +108,7 @@ test('status information shows all nonzero counts in priority order and ignores 
   const info = page.getByRole('button', { name: 'Application status counts' });
   await info.focus();
   await expect(page.getByRole('tooltip').locator('span')).toHaveText([
+    '7 total applications',
     '1 offer application',
     '1 interviewing application',
     '1 OA application',
@@ -134,6 +135,7 @@ test('saved applications survive editing, starring, sorting, and reload', async 
   await page.getByRole('button', { name: 'Application status counts' }).hover();
   await expect(page.getByRole('tooltip')).toBeVisible();
   await expect(page.getByRole('tooltip').locator('span')).toHaveText([
+    '2 total applications',
     '1 OA application',
     '1 active application',
   ]);

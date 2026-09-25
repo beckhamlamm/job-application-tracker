@@ -44,6 +44,9 @@ export default function ApplicationInfo({ items }: { items: Application[] }) {
         </svg>
       </button>
       <span id={id} role="tooltip" className="application-info-tooltip">
+        <span className="application-info-total">
+          {items.length} total {items.length === 1 ? 'application' : 'applications'}
+        </span>
         {counts.length ? (
           counts.map(({ status, count }) => (
             <span key={status}>
