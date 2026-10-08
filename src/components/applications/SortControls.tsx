@@ -1,4 +1,5 @@
 // Owns presentation of the existing sort choices and search field.
+import { useRef } from 'react';
 import type { SortMode } from '../../lib/applications/types';
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: 'applied', label: 'Date applied' },
@@ -19,6 +20,7 @@ export default function SortControls({
   onSort: (mode: SortMode) => void;
   onSearch: (value: string) => void;
 }) {
+  const searchInput = useRef<HTMLInputElement>(null);
   return (
     <div className="table-tools">
       <label className="sort-control">
@@ -35,18 +37,33 @@ export default function SortControls({
           ))}
         </select>
       </label>
-      <label className="search">
+      <div className="search">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-4-4" />
         </svg>
         <input
+          ref={searchInput}
           aria-label="Search applications"
           placeholder="Search applications"
           value={search}
           onChange={(event) => onSearch(event.target.value)}
         />
-      </label>
+        {search.length > 0 && (
+          <button
+            type="button"
+            className="search-clear"
+            aria-label="Clear search"
+            title="Clear search"
+            onClick={() => {
+              onSearch('');
+              searchInput.current?.focus();
+            }}
+          >
+            ×
+          </button>
+        )}
+      </div>
     </div>
   );
 }

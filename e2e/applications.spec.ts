@@ -161,13 +161,21 @@ test('saved applications survive editing, starring, sorting, and reload', async 
   await expect(page.locator('tbody tr').first()).toContainText('Alpha Labs');
   await page.getByLabel('Search applications').fill('Beta');
   await expect(page.locator('tbody tr')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Clear search', exact: true }).click();
+  await expect(page.getByLabel('Search applications')).toHaveValue('');
+  await expect(page.getByLabel('Search applications')).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Clear search', exact: true })).toHaveCount(0);
+  await expect(page.locator('tbody tr')).toHaveCount(2);
+  await page.getByLabel('Search applications').fill('Beta');
   const downloadEvent = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export CSV' }).click();
   expect((await downloadEvent).suggestedFilename()).toMatch(/^ApplyBoard-\d{2}-\d{2}-\d{4}\.csv$/);
   page.on('dialog', (dialog) => dialog.accept());
   await page.getByRole('button', { name: 'Delete Beta application' }).click();
   await expect(page.locator('tbody tr')).toHaveCount(0);
-  await page.getByLabel('Search applications').fill('');
+  await page.getByRole('button', { name: 'Clear search', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByLabel('Search applications')).toHaveValue('');
   await expect(page.locator('tbody tr')).toHaveCount(1);
 });
 test('parse failures open manual entry and new records persist', async ({ page }) => {
