@@ -14,6 +14,9 @@
 /* Contains absolutely positioned accessible headings within the horizontally scrolling table. */
 .table-scroll{position:relative}
 
+/* Stretch the repository button to the same height as the adjacent header actions. */
+.header-actions .github-link{align-self:stretch;height:auto}
+
 /* Repository shortcut picks up a hyperlink-blue glow on hover and keyboard focus. */
 .github-link{display:grid;place-items:center;align-self:center;flex-shrink:0;width:40px;height:40px;border-radius:9px;color:var(--muted);text-decoration:none;transition:color .18s ease,filter .18s ease}.github-link svg{width:24px;height:24px;fill:currentColor}.github-link:hover,.github-link:focus-visible{color:#0969da;filter:drop-shadow(0 0 5px rgba(9,105,218,.55))}.github-link:focus-visible{outline:2px solid #0969da;outline-offset:2px}@media(prefers-reduced-motion:reduce){.github-link{transition:none}}
 
