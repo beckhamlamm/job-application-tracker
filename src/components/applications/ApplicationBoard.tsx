@@ -71,6 +71,18 @@ export default function ApplicationBoard() {
           <button className="button primary compact" disabled={!ready} onClick={() => setDraft({})}>
             <span>＋</span> Add manually
           </button>
+          <a
+            className="github-link"
+            href="https://github.com/beckhamlamm/job-application-tracker"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="View ApplyBoard on GitHub"
+            title="View ApplyBoard on GitHub"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 .75a11.25 11.25 0 0 0-3.558 21.923c.563.104.768-.244.768-.542 0-.267-.01-.975-.015-1.914-3.13.68-3.791-1.508-3.791-1.508-.512-1.3-1.25-1.646-1.25-1.646-1.023-.7.078-.686.078-.686 1.13.08 1.725 1.16 1.725 1.16 1.006 1.724 2.64 1.226 3.282.938.102-.729.394-1.226.716-1.508-2.499-.284-5.126-1.25-5.126-5.566 0-1.23.44-2.233 1.16-3.021-.117-.285-.503-1.43.11-2.98 0 0 .945-.303 3.094 1.154A10.79 10.79 0 0 1 12 6.176c.956.004 1.918.13 2.817.379 2.148-1.457 3.09-1.154 3.09-1.154.616 1.55.23 2.695.113 2.98.722.788 1.158 1.791 1.158 3.021 0 4.327-2.631 5.279-5.138 5.558.404.35.766 1.044.766 2.105 0 1.52-.014 2.747-.014 3.12 0 .3.202.65.774.54A11.252 11.252 0 0 0 12 .75Z" />
+            </svg>
+          </a>
         </div>
       </header>
       <main>

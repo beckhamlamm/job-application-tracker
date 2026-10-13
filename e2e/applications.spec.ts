@@ -1,6 +1,23 @@
 // Exercises storage migration, React interactions, CSV downloads, and parser failures in a fresh browser.
 import { test, expect } from '@playwright/test';
 const storageKey = 'applyboard.applications.v1';
+test('GitHub shortcut links to the project and glows blue on hover and focus', async ({ page }) => {
+  await page.goto('/');
+  const link = page.getByRole('link', { name: 'View ApplyBoard on GitHub' });
+  await expect(link).toHaveAttribute(
+    'href',
+    'https://github.com/beckhamlamm/job-application-tracker',
+  );
+  await expect(link).toHaveAttribute('target', '_blank');
+  await link.hover();
+  await expect(link).toHaveCSS('color', 'rgb(9, 105, 218)');
+  await page.mouse.move(0, 0);
+  await link.focus();
+  await expect(link).toHaveCSS('color', 'rgb(9, 105, 218)');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(link).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
 test('custom calendars support picking, typing, clearing, keyboard navigation, and mobile layout', async ({
   page,
 }, testInfo) => {
